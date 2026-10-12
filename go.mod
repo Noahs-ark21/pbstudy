@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/rohanthewiz/bytdb v0.9.1
+	github.com/rohanthewiz/bytdb v0.21.2
 	github.com/rohanthewiz/element v0.6.0
 	github.com/rohanthewiz/go-styl v0.2.0
 	github.com/rohanthewiz/logger v1.3.0
@@ -14,7 +14,7 @@ require (
 )
 
 require (
-	github.com/rohanthewiz/btypedb v0.7.0 // indirect
+	github.com/rohanthewiz/btypedb v0.9.0 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/tidwall/btype v0.3.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect

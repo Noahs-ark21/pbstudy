@@ -112,8 +112,8 @@ Environment:
   ANTHROPIC_API_KEY   enables AI sermon drafting    (optional)
 
 The sync directory must not contain, or live inside, the data directory:
-the live databases are unlocked and append-only, so a sync daemon that
-copies one mid-write captures a torn file.
+the live databases are written in place, and a sync daemon ignores their
+locks, so one that copies a database mid-write captures a torn file.
 `)
 }
 
@@ -249,16 +249,19 @@ func cmdSync(conf cfg.Config, st *store.Store) error {
 //
 // # Why it requires a sync directory
 //
-// bytdb's file is append-only, so a DELETE reclaims nothing on disk; compacting
-// a database with no sync folder would spend a destructive pass to save nothing.
-// The sync folder is where the saving is: one JSON file per dead row, kept
-// forever, in a directory a daemon re-uploads. Somebody wanting the database
-// itself smaller wants `pbstudy backup`, which writes a fresh file.
+// A DELETE does not shrink bytdb's file: it appends to the log, and the space
+// comes back only when bytdb rewrites the log — on its own once the log has
+// grown enough, or on demand through VACUUM (bytdb v0.19+), which this command
+// does not run. Compacting a database with no sync folder would therefore
+// spend a destructive pass to save next to nothing. The sync folder is where
+// the saving is: one JSON file per dead row, kept forever, in a directory a
+// daemon re-uploads. Somebody wanting the database itself smaller wants
+// `pbstudy backup`, which writes a fresh file.
 func cmdCompact(conf cfg.Config, st *store.Store, args []string) error {
 	if !conf.SyncEnabled() {
 		return serr.New("compact needs a sync directory",
 			"hint", "set "+cfg.EnvSyncDir+"; without one there are no tombstone "+
-				"files to remove, and bytdb's append-only file does not shrink")
+				"files to remove, and deleting rows does not shrink the database file")
 	}
 
 	retention := syncer.DefaultRetention

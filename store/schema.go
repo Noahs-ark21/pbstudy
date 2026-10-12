@@ -7,10 +7,13 @@ import (
 	"github.com/rohanthewiz/serr"
 )
 
-// One bytdb limit still shapes this file: there is no `ALTER TABLE ADD PRIMARY
-// KEY`. Every table's primary key is declared inline at CREATE time, and there
-// is no second chance to add one — which is why the full study schema ships
-// here from the start rather than growing a phase at a time.
+// One bytdb limit still shapes this file: there is no lone `ALTER TABLE ADD
+// PRIMARY KEY`. Every table's primary key is declared inline at CREATE time —
+// which is why the full study schema ships here from the start rather than
+// growing a phase at a time. Since bytdb v0.14 an existing key can be
+// replaced (`DROP CONSTRAINT t_pkey, ADD PRIMARY KEY (...)` as one ALTER), so
+// a later key change is a migration, not a rebuild; but a table still cannot
+// be created keyless and given its key afterwards.
 //
 // Idempotency is the DDL's own job. Every statement below carries
 // `IF NOT EXISTS`, so bootstrapping an already-populated database is a no-op

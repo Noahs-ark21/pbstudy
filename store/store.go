@@ -54,9 +54,16 @@ type Store struct {
 func Open(conf cfg.Config) (*Store, error) {
 	st := &Store{cfg: conf}
 
-	// Take the data-directory lock before touching either database. bytdb
-	// does no locking of its own, so this is the only thing standing between
-	// a stray second process and interleaved appends into study.bytdb.
+	// Take the data-directory lock before touching either database.
+	//
+	// Since v0.17 bytdb also locks each file it opens (an flock on a
+	// <db>.lock sidecar), so a second process can no longer interleave
+	// appends into study.bytdb even without this. The directory lock is kept
+	// because it still does two things bytdb's cannot: it claims both
+	// databases as one unit before either is opened, so a refused second
+	// process never gets as far as half-opening the pair, and it fails with
+	// a message that names pbstudy and the holding PID rather than a
+	// bytdb ErrLocked from inside sql.Open.
 	lock, err := acquireDirLock(conf.DataDir)
 	if err != nil {
 		return nil, err
@@ -120,10 +127,17 @@ func (s *Store) Close() error {
 // BackupStudy writes a consistent snapshot of the study database to destDir,
 // named study-<RFC3339-ish timestamp>.bytdb, and returns the path written.
 //
-// This is the ONLY safe way to get a copy of a live bytdb file. bytdb does no
-// file locking, so a sync daemon (or a plain `cp`) that reads the live file
-// mid-append captures a torn tail. Engine.Backup takes an internal snapshot
-// and writes a self-consistent file, which is safe to hand to iCloud.
+// This is the ONLY safe way to get a copy of a live bytdb file. bytdb's file
+// lock is advisory: it keeps other bytdb openers out, but a sync daemon (or a
+// plain `cp`) never asks for it, so one that reads the live file mid-append
+// still captures a torn tail. Engine.Backup takes an internal snapshot and
+// writes a self-consistent file, which is safe to hand to iCloud.
+//
+// Since bytdb v0.18, Backup also locks its destination (refusing one that is
+// a live database), and like every bytdb lock that leaves a small
+// study-<stamp>.bytdb.lock sidecar beside the snapshot for good. It is
+// harmless: the lock is the flock, not the file, so a leftover never blocks
+// anything, and the backup listing only reads *.bytdb names.
 func (s *Store) BackupStudy(destDir string) (string, error) {
 	if destDir == "" {
 		return "", serr.New("no backup destination configured")

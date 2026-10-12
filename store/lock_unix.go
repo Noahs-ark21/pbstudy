@@ -23,11 +23,17 @@ type dirLock struct {
 //
 // # Why this exists
 //
-// bytdb does no file locking of its own, and btypedb assumes it owns the
-// database file. Two pbstudy processes on one data directory — a running
-// `serve` plus a `download` or `backup` in another terminal — would each hold
-// their own engine over the same bytes and interleave appends. The scripture
-// cache could be rebuilt from that; study.bytdb could not.
+// btypedb assumes it owns the database file. Two pbstudy processes on one data
+// directory — a running `serve` plus a `download` or `backup` in another
+// terminal — would each hold their own engine over the same bytes and
+// interleave appends. The scripture cache could be rebuilt from that;
+// study.bytdb could not.
+//
+// When this lock was written, bytdb did no file locking of its own and this
+// was the only guard. Since bytdb v0.17 each database file carries its own
+// flock as well, so this is now the outer of two layers: it takes both
+// databases as one unit, before either is opened, and refuses with a message
+// that names pbstudy rather than a bytdb ErrLocked.
 //
 // flock is used rather than a PID file because the kernel releases it when
 // the process exits for any reason, including a crash or a kill -9. A stale

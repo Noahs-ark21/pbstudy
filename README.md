@@ -316,8 +316,10 @@ stale scripture cache be deleted without a second thought.
 
 ### Never copy a live database
 
-bytdb does no file locking, so a copy taken while the process is appending has
-a torn tail. Three consequences, all enforced rather than documented:
+bytdb locks its files against other bytdb openers, but the lock is advisory: a
+sync daemon or `cp` never asks for it, so a copy taken while the process is
+appending has a torn tail. Three consequences, all enforced rather than
+documented:
 
 - **Never point a sync daemon at the data directory.** Use
   `pbstudy backup` (or the settings page's button), which takes an internal
