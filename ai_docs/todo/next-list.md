@@ -52,6 +52,18 @@ Seeded 2026-10-12 from all seven session docs (`2026-0805-1823` through
   `syncer/compact.go`), but a shared live tag keeps its redundant file on every
   machine. A different cleanup than compaction: remove a file whose id no
   longer exists anywhere.
+  *Premise corrected 2026-10-14 (`2026-1014-0736-work-next-list-n019-n005-n001`):*
+  that cleanup cannot work for a live tag. The redundant file's id still
+  exists on the machine that minted it (`ApplyTag` keeps both local ids, by
+  design), and export rewrites any local row whose file is missing
+  (`syncer.go`, `doExport`). So deleting it here just makes the other
+  machine write it back on its next pass. The fix that would converge is
+  **id convergence** on a name merge: both machines adopt one deterministic
+  id (say, the lexicographically smaller UUID), re-point `note_tags`, and
+  tombstone the losing id so its file is cleared by compaction. That changes
+  tag identity across machines, which `ApplyTag`'s comment currently argues
+  is unnecessary. **Question for the user:** worth doing for one small file
+  per machine per shared tag, or move this to Non-goals?
 
 - **N-007** · raised `2026-0805-2238-compaction` · value low
   Compaction is per machine and has to be run on each. A machine that has not
