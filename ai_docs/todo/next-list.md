@@ -127,7 +127,7 @@ Closures before this file existed are recorded in the session docs' bodies.
 The entries below are the ones found done while seeding the file.
 
 - **N-017** · raised `2026-1012-0131-bytdb-v0212-upgrade-next-list-seed` ·
-  closed 2026-10-14 — `pbstudy compact` grew the file it purged. New
+  closed 2026-10-14, `2026-1014-0734-n002-n006-n017-n018-escape-backstop-sigterm-vacuum-sidecar` — `pbstudy compact` grew the file it purged. New
   `Store.CompactStudy` calls `Engine.Compact` (the native form of `VACUUM`,
   no transaction), and every non-dry-run `compact` ends with it and prints
   `Study database  before → after bytes`. Checked on a scratch data dir:
@@ -136,21 +136,21 @@ The entries below are the ones found done while seeding the file.
   shrink and that the surviving row reads back through the same handle.
   README and usage text updated.
 - **N-018** · raised `2026-1012-0131-bytdb-v0212-upgrade-next-list-seed` ·
-  closed 2026-10-14 — Backup left a `.lock` sidecar in the synced backups
+  closed 2026-10-14, `2026-1014-0734-n002-n006-n017-n018-escape-backstop-sigterm-vacuum-sidecar` — Backup left a `.lock` sidecar in the synced backups
   folder. `BackupStudy` now removes it once `Backup` returns
   (`removeLockSidecar`, symlink-resolved the way btypedb names it). The
   sidecar race btypedb guards against needs a second opener of the same path,
   and nothing opens a freshly minted snapshot. `store/store_test.go` checks
   that only the `*.bytdb` file remains, directly and through a symlinked
   folder; both tests fail with the removal disabled.
-- **N-006** · raised `2026-0805-2048-phase5-sync` · closed 2026-10-14 —
+- **N-006** · raised `2026-0805-2048-phase5-sync` · closed 2026-10-14, `2026-1014-0734-n002-n006-n017-n018-escape-backstop-sigterm-vacuum-sidecar` —
   No signal handler without sync. `installShutdownFlush` now takes a nil
   syncer (skips the flush, still closes the store) and `cmdServe` installs it
   unconditionally. Checked on a scratch server with no `PBSTUDY_SYNC_DIR`:
   `SIGTERM` printed "Stopping (terminated) ..." and the process exited through
   `st.Close()`.
 - **N-002** · raised `2026-0805-1917-phase2-notes-tags-xrefs` · closed
-  2026-10-14 — No framework backstop for the escaping rule. Added
+  2026-10-14, `2026-1014-0734-n002-n006-n017-n018-escape-backstop-sigterm-vacuum-sidecar` — No framework backstop for the escaping rule. Added
   `web/ui/escape_test.go`: it walks every view struct with reflection,
   poisons every exported string it can reach with `"'><script>`, renders,
   and fails on any raw payload. Fields that are constrained upstream (validated
