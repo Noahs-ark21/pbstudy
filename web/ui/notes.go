@@ -9,7 +9,7 @@ import (
 )
 
 // NoteURL is the permalink for a note.
-func NoteURL(id string) string { return "/notes/" + id }
+func NoteURL(id string) string { return "/notes/" + pathSeg(id) }
 
 // NotesList is the /notes index.
 type NotesList struct {

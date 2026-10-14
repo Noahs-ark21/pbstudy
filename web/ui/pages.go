@@ -367,9 +367,13 @@ func humanSize(n int64) string {
 	}
 }
 
+// kv writes one term/definition pair. Both halves are escaped here rather
+// than at each call site: the values include paths read from the environment
+// (PBSTUDY_DATA_DIR, PBSTUDY_SYNC_DIR), which did not originate in this
+// binary, and every other caller passes plain text that esc() leaves as is.
 func kv(b *element.Builder, key, value string) (x any) {
-	b.Dt().T(key)
-	b.Dd().T(value)
+	b.Dt().T(esc(key))
+	b.Dd().T(esc(value))
 	return
 }
 
@@ -390,11 +394,16 @@ type ErrorPage struct {
 }
 
 func (e ErrorPage) Render(b *element.Builder) (x any) {
+	// Heading and Detail are escaped because handlers build them from the
+	// request: the unknown-translation and "no such script" messages echo a
+	// URL path segment back. Browsers percent-encode '<' in paths, so this was
+	// latent rather than reachable from a link, but a raw request (curl, a
+	// proxy that decodes) put markup on the page before these esc() calls.
 	b.DivClass("error-page").R(
-		b.H1Class("page-title").F("%d — %s", e.Status, e.Heading),
+		b.H1Class("page-title").F("%d — %s", e.Status, esc(e.Heading)),
 		b.Wrap(func() {
 			if e.Detail != "" {
-				b.PClass("page-sub").T(e.Detail)
+				b.PClass("page-sub").T(esc(e.Detail))
 			}
 		}),
 		b.PClass("link-row").R(

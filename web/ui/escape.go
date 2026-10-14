@@ -45,3 +45,21 @@ func esc(s string) string { return html.EscapeString(s) }
 // parameters must survive as-is — which is why the escaping happens here, on
 // the value, rather than on the assembled URL.
 func urlQueryEscape(s string) string { return url.QueryEscape(s) }
+
+// pathSeg percent-encodes one path segment — in practice a record id spliced
+// into a URL like "/notes/<id>/edit".
+//
+// Ids are minted by uuid.NewString, so for every id this binary created the
+// call is a no-op. It exists for the ones it did not: sync imports accept any
+// non-empty id a record file carries (study.ApplyNote and friends), and a
+// hand-edited or hostile file in the sync folder could carry `"><script>`.
+// Escaping at the URL helpers was chosen over rejecting non-UUID ids at import
+// because import is deliberately permissive (it repairs rather than rejects,
+// see decodeOutline), and because the helpers' output lands in two places —
+// href/action attributes and redirect Location headers — that percent-encoding
+// makes safe at once, where esc() would only cover the first.
+//
+// url.PathEscape encodes the quote characters and angle brackets (and '/', so
+// an id cannot add path segments); it leaves '&' alone, which is harmless
+// inside a quoted attribute value.
+func pathSeg(id string) string { return url.PathEscape(id) }

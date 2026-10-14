@@ -40,15 +40,6 @@ Seeded 2026-10-12 from all seven session docs (`2026-0805-1823` through
 
 ## Open
 
-- **N-002** · raised `2026-0805-1917-phase2-notes-tags-xrefs` · value medium
-  The escaping rule in `web/ui/escape.go` applies to every new view. There is
-  no framework backstop. `element` v0.6.0's `T()` still writes strings
-  verbatim (`builder_funcs.go:56`), so every user-supplied string must go
-  through `esc()` by hand. `ui/search_test.go` pins the `highlight()` half and
-  `ui/sermon_test.go` the sermon-builder half; other views have no test. Lapsed
-  once: carried through `2026-0805-2012`, then dropped from `2026-0805-2048`
-  without being done.
-
 - **N-003** · raised `2026-0805-1917-phase2-notes-tags-xrefs` · value low
   The reader loads `ChapterMarks` on every chapter render
   (`web/handlers_read.go:143`). Fine at present scale; if it ever shows up, the
@@ -159,6 +150,21 @@ item yet; items move here from Open when the user decides they are "later".
 Closures before this file existed are recorded in the session docs' bodies.
 The entries below are the ones found done while seeding the file.
 
+- **N-002** · raised `2026-0805-1917-phase2-notes-tags-xrefs` · closed
+  2026-10-14 — No framework backstop for the escaping rule. Added
+  `web/ui/escape_test.go`: it walks every view struct with reflection,
+  poisons every exported string it can reach with `"'><script>`, renders,
+  and fails on any raw payload. Fields that are constrained upstream (validated
+  translations, `NormalizeScope`, handler-built URLs, sync-report counts) are
+  listed in `trustedFields`, each with where the constraint lives. A new field
+  is poisoned automatically. The first run found four sinks, all fixed:
+  `ErrorPage` heading/detail (echo URL path segments; latent because browsers
+  percent-encode `<` in paths, but reproduced with a raw request on a scratch
+  server), Settings `kv()` (environment paths), `kindLabel`'s fallback (a
+  sync-file kind), and record ids in hrefs/actions (sync import accepts any
+  non-empty id). Ids now go through `pathSeg()` (`url.PathEscape`) in
+  `NoteURL`/`TagURL`/`SermonURL`, section buttons and xref delete; that is a
+  no-op on UUIDs.
 - **N-013** · raised `2026-0805-1823-phase1-skeleton-reader` · closed
   2026-10-12 — Confirm the exact model ID for the AI draft rather than
   trusting `claude-sonnet-5` from `PLAN.md`. Checked against the current model

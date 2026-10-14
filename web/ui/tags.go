@@ -8,7 +8,7 @@ import (
 )
 
 // TagURL is the permalink for a tag's topical study page.
-func TagURL(id string) string { return "/tags/" + id }
+func TagURL(id string) string { return "/tags/" + pathSeg(id) }
 
 // TagsList is the /tags index.
 //

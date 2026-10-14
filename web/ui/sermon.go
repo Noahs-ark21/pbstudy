@@ -7,7 +7,7 @@ import (
 )
 
 // SermonURL is the permalink for a sermon.
-func SermonURL(id string) string { return "/sermons/" + id }
+func SermonURL(id string) string { return "/sermons/" + pathSeg(id) }
 
 // SermonsList is the /sermons index.
 type SermonsList struct {
@@ -175,7 +175,7 @@ func (v SermonBuilder) renderOutline(b *element.Builder) (x any) {
 
 // sectionButton emits one single-button form targeting a section by id.
 func (v SermonBuilder) sectionButton(b *element.Builder, sectionID, action, dir, glyph, title string) (x any) {
-	url := SermonURL(v.Sermon.ID) + "/sections/" + sectionID + "/" + action
+	url := SermonURL(v.Sermon.ID) + "/sections/" + pathSeg(sectionID) + "/" + action
 
 	b.Form("method", "post", "action", url).R(
 		b.Wrap(func() {
@@ -339,7 +339,10 @@ func kindLabel(kind string) string {
 	case study.KindPoint:
 		return "Point"
 	default:
-		return kind
+		// An unknown kind can only have come from a sync file (the builder's
+		// forms post the four constants), so it is echoed escaped rather
+		// than trusted.
+		return esc(kind)
 	}
 }
 

@@ -204,7 +204,7 @@ func (v VerseHub) renderXrefGroup(b *element.Builder, heading string, xrefs []st
 				// Deleting is a GET-free, one-button form so it cannot be
 				// triggered by a prefetch or a crawler following links.
 				b.FormClass("xref-delete", "method", "post",
-					"action", "/xrefs/"+xr.ID+"/delete").R(
+					"action", "/xrefs/"+pathSeg(xr.ID)+"/delete").R(
 					b.Input("type", "hidden", "name", "return",
 						"value", esc(VerseURL(v.Book.Num, v.Chapter, v.Verse)+
 							"?t="+v.ReadTranslation)),
