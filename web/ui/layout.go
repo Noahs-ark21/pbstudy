@@ -63,13 +63,19 @@ func (p Page) Render(b *element.Builder) (x any) {
 			b.Title().T(esc(title)),
 			b.Link("rel", "stylesheet", "href", "/css/app.css"),
 
-			// ScriptTagger reads BLB.Tagger when it executes, so the config
-			// must be assigned before the script tag — assigning it after
-			// is silently ignored. The script itself is deferred: if BLB is
-			// unreachable the page still renders and every local feature
-			// still works, we just lose the hover popups.
-			b.Script().T(blb.TaggerConfigJS(translation)),
+			// ScriptTagger replaces BLB.Tagger with its defaults when it
+			// executes, so its config has to be assigned AFTER it runs: the
+			// second deferred script below does that, and deferred scripts run
+			// in document order. (The inverse, an inline config before the
+			// tag, was what this used to do, and the tagger silently threw it
+			// away.) Both are deferred: if BLB is unreachable the page still
+			// renders and every local feature still works, we just lose the
+			// hover popups, and the config script finds no BLB and does
+			// nothing.
 			b.Script("src", blb.ScriptTaggerURL, "defer", "defer").R(),
+			b.Script("src", blb.TaggerConfigScript, "defer", "defer",
+				"data-translation", blb.TaggerTranslation(translation),
+				"data-no-tag", blb.NoTagClass).R(),
 
 			b.Script("src", "/js/app.js", "defer", "defer").R(),
 		),

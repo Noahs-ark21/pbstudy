@@ -36,7 +36,7 @@ Seeded 2026-10-12 from all seven session docs (`2026-0805-1823` through
   section** (Closed, Non-goals, or a move between the three).
 - **Open, Validate and Roadmap stay in ID order.** Never renumber.
 
-**Next ID:** N-021
+**Next ID:** N-022
 
 ## Open
 
@@ -88,15 +88,6 @@ Items whose remaining work is purely testing: run, look, hear, measure, or
 write or repair a test. No product change is planned unless the check finds a
 defect.
 
-- **N-001** · raised `2026-0805-1823-phase1-skeleton-reader` · value medium
-  ScriptTagger hover popups in a real browser, inside note bodies. Unverified
-  since Phase 2: the Chrome instance available then could not reach this
-  machine's localhost (`ERR_CONNECTION_REFUSED` while curl got 200). The served
-  HTML is right: the `BLB.Tagger` config precedes the script tag, and
-  `blb-no-tag` is on scripture containers but not on note bodies. It needs a
-  human (or a browser that can reach localhost) to look:
-  `PBSTUDY_DATA_DIR=/tmp/pbstudy-dev go run . serve`.
-
 - **N-004** · raised `2026-0805-2012-phase4-sermon-builder-ai` · value medium
   A successful live AI draft has never been observed (no `ANTHROPIC_API_KEY`
   in any session so far). The request shape, the streaming parse, the framing
@@ -142,6 +133,26 @@ item yet; items move here from Open when the user decides they are "later".
 Closures before this file existed are recorded in the session docs' bodies.
 The entries below are the ones found done while seeding the file.
 
+- **N-021** · raised `2026-1014-0736-work-next-list-n019-n005-n001` · closed 2026-10-14, `2026-1014-0736-work-next-list-n019-n005-n001` —
+  Found by N-001's check: the ScriptTagger config never took effect. The
+  tagger replaces `BLB.Tagger` with its defaults on load, so the inline
+  object emitted *before* the script tag was discarded: popups quoted NKJV,
+  `HyperLinks` stayed `"none"` (it takes `"all"/"none"/"hover"`, not a
+  bool), and `blb-no-tag` was never excluded, so scripture containers were
+  tagged too (a control page in Chrome tagged a `blb-no-tag` div). Now a
+  deferred `/js/blb-tagger.js` runs right after the tagger, reads
+  translation and exclusion class from data attributes, and sets the
+  documented properties. Checked in Chrome on the real app: `Translation`
+  KJV, `HyperLinks` "all", `NoSearchClasses` includes `blb-no-tag`, popup
+  reads "Romans 8:28 (KJV)". `TestTaggerConfigFollowsTagger` pins the order.
+- **N-001** · raised `2026-0805-1823-phase1-skeleton-reader` · closed
+  2026-10-14, `2026-1014-0736-work-next-list-n019-n005-n001` — ScriptTagger hover popups in a real browser, inside
+  note bodies. Chrome (via the extension) now reaches localhost. On a
+  scratch server, a note body's "John 3:16", "Romans 8:28" and "Eph 2:8-9"
+  were all tagged, and hovering one opened the BLB popup with the verse
+  text. The app's own reference chip and the scripture card were not tagged.
+  The check also found that the tagger config was being ignored, raised and
+  fixed as N-021. After the fix the popup quotes KJV.
 - **N-019** · raised `2026-1012-0131-bytdb-v0212-upgrade-next-list-seed` ·
   closed 2026-10-14, `2026-1014-0736-work-next-list-n019-n005-n001` — `DefaultModel` is now
   `claude-sonnet-5-5` (same price as `claude-sonnet-5`). Re-checked against

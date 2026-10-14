@@ -7,7 +7,8 @@
 //     breaks.
 //  2. ScriptTagger — BLB's own script, which finds scripture references in
 //     page text and attaches hover popups. Loaded with `defer`, so a failed
-//     fetch costs nothing but the popups.
+//     fetch costs nothing but the popups, and configured by a second deferred
+//     script that runs after it (TaggerConfigScript).
 //
 // Deliberately NOT used: iframes. BLB sends no X-Frame-Options so framing
 // would technically work, but embedding a whole third-party site inside a
@@ -106,20 +107,23 @@ func normalizeTranslation(t string) string {
 	}
 }
 
-// TaggerConfigJS is the configuration ScriptTagger reads at load time.
+// TaggerConfigScript is the local script that configures ScriptTagger. It is
+// emitted, deferred, immediately after the ScriptTaggerURL tag; see
+// assets/js/blb-tagger.js for why the order matters.
 //
-// It must appear BEFORE the script tag: the tagger snapshots BLB.Tagger on
-// execution, so config assigned afterwards is ignored. Getting this wrong is
-// cosmetic (default styling instead of ours), never fatal.
-func TaggerConfigJS(translation string) string {
-	return `var BLB = BLB || {};
-BLB.Tagger = {
-  Translation: "` + strings.ToUpper(normalizeTranslation(translation)) + `",
-  HyperLinks: true,
-  TargetNewWindow: true,
-  DarkTheme: true,
-  Style: "default"
-};`
+// This replaced an inline `BLB.Tagger = {...}` placed BEFORE the tagger,
+// which the tagger overwrote with its defaults on load: popups quoted NKJV,
+// HyperLinks stayed "none", and NoTagClass was never excluded, so scripture
+// containers were tagged too. None of that was visible until the popups were
+// checked in a browser (N-001).
+const TaggerConfigScript = "/js/blb-tagger.js"
+
+// TaggerTranslation is the version abbreviation ScriptTagger's popups quote
+// for a pbstudy translation: "KJV" or "ASV". WEB maps to KJV, as it does
+// for deep links. The value comes from a fixed set, so it is safe in an
+// attribute without escaping.
+func TaggerTranslation(translation string) string {
+	return strings.ToUpper(normalizeTranslation(translation))
 }
 
 // urlQueryEscape percent-encodes a query value. Written out rather than
