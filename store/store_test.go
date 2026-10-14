@@ -1,10 +1,12 @@
 package store
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/rohanthewiz/pbstudy/cfg"
 )
@@ -71,5 +73,49 @@ func TestBackupStudyThroughSymlink(t *testing.T) {
 		if strings.HasSuffix(e.Name(), ".lock") {
 			t.Errorf("lock sidecar %s left in the symlinked backups folder", e.Name())
 		}
+	}
+}
+
+// TestCompactStudyShrinksAfterDeletes is the reason CompactStudy exists:
+// DELETE appends to bytdb's log, so a purge alone grows the file. Compaction
+// has to bring it back below where it started, without losing a live row.
+func TestCompactStudyShrinksAfterDeletes(t *testing.T) {
+	st := openTestStore(t)
+	now := time.Now().UTC()
+
+	// Enough rows, with enough body, that the deleted ones dominate the file;
+	// a handful of tiny rows would leave compaction's saving inside the
+	// noise of the catalog records.
+	body := strings.Repeat("grace upon grace ", 64)
+	for i := range 200 {
+		if _, err := st.Study.Exec(
+			`INSERT INTO notes (id, title, body_md, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)`,
+			fmt.Sprintf("n%03d", i), "note", body, now, now); err != nil {
+			t.Fatalf("insert %d: %v", i, err)
+		}
+	}
+	if _, err := st.Study.Exec(`DELETE FROM notes WHERE id <> $1`, "n000"); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+
+	before, after, err := st.CompactStudy()
+	if err != nil {
+		t.Fatalf("CompactStudy() error: %v", err)
+	}
+	if before == 0 || after == 0 {
+		t.Fatalf("CompactStudy() sizes = %d → %d, want both non-zero", before, after)
+	}
+	if after >= before {
+		t.Errorf("CompactStudy() did not shrink the file: %d → %d bytes", before, after)
+	}
+
+	// The survivor is still there, through the same handle: compaction swaps
+	// the log underneath an open engine.
+	var n int
+	if err := st.Study.QueryRow(`SELECT COUNT(*) FROM notes`).Scan(&n); err != nil {
+		t.Fatalf("count after compaction: %v", err)
+	}
+	if n != 1 {
+		t.Errorf("after compaction notes holds %d rows, want 1", n)
 	}
 }

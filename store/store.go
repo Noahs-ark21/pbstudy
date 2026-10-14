@@ -203,3 +203,40 @@ func removeLockSidecar(dest string) error {
 	}
 	return nil
 }
+
+// CompactStudy rewrites the study database's log as a minimal snapshot of
+// the live rows, and reports the file size before and after.
+//
+// bytdb's file is append-only: a DELETE appends a tombstone rather than
+// freeing space, so `pbstudy compact`, which deletes rows, used to leave the
+// file larger than it found it. Engine.Compact is the same pass bytdb's
+// background auto-compaction runs once the log outgrows its threshold;
+// calling it here makes the command shrink the file it just purged instead of
+// waiting for that heuristic. It is the native-engine form of the SQL VACUUM
+// statement, reached the same way BackupStudy reaches Backup. Like VACUUM it
+// must not run inside a transaction; it takes none, and readers and writers
+// keep running (bytdb only pauses writers briefly).
+//
+// The sizes are best-effort: a failed Stat reports 0 rather than failing a
+// compaction that succeeded.
+func (s *Store) CompactStudy() (before, after int64, err error) {
+	path := s.cfg.StudyDBPath()
+	before = fileSize(path)
+
+	eng, err := stdlib.Engine(context.Background(), s.Study)
+	if err != nil {
+		return before, before, serr.Wrap(err, "cannot reach bytdb engine for compaction")
+	}
+	if err := eng.Compact(); err != nil {
+		return before, before, serr.Wrap(err, "study database compaction failed", "path", path)
+	}
+	return before, fileSize(path), nil
+}
+
+func fileSize(path string) int64 {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return 0
+	}
+	return fi.Size()
+}

@@ -70,7 +70,8 @@ pbstudy backup [dir]                 snapshot the study database
 pbstudy sync                         reconcile with the sync directory
 pbstudy compact [days] [--dry-run]   remove tombstones older than <days>
                                      (default 90) from the database and the
-                                     sync directory
+                                     sync directory, then shrink the
+                                     database file
 ```
 
 Downloads are idempotent — re-running replaces a translation in place rather
@@ -281,7 +282,12 @@ Compact ~/iCloud/pbstudy
   Tags               1 row removed · 2 files removed
   Cross-references   nothing to remove
   Sermons            1 row removed · 1 file removed
+  Study database     16595 → 5346 bytes
 ```
+
+The last line is the database file being rewritten without the removed rows.
+bytdb's file is append-only, so deleting a row on its own makes the file
+*larger*; every real pass ends by compacting it. A dry run leaves it alone.
 
 **The window is the safety.** A machine that has been switched off longer than
 the retention period never saw the delete, still holds the row alive, and will

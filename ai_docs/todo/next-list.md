@@ -59,15 +59,6 @@ Seeded 2026-10-12 from all seven session docs (`2026-0805-1823` through
   again next pass. Bounded churn, converges once both compact, and what comes
   back is a tombstone, invisible to every read in `study/`.
 
-- **N-017** · raised `2026-1012-0131-bytdb-v0212-upgrade-next-list-seed` · value low
-  `pbstudy compact` removes tombstoned rows but leaves the database file
-  bigger than before: each `DELETE` appends to bytdb's log (measured
-  17,867 → 18,868 bytes after removing two rows). bytdb v0.19+ has `VACUUM`
-  (`Engine.Compact`, reachable via `stdlib.Engine`), which rewrites the log on
-  demand; running it at the end of a non-dry-run `compact` would make the
-  command shrink the file it just purged. Not a transaction-block statement,
-  so it must run outside one. See N-012 for the related decision.
-
 - **N-019** · raised `2026-1012-0131-bytdb-v0212-upgrade-next-list-seed` · value low
   The AI draft uses `claude-sonnet-5` (`ai/draft.go:41`), which is valid but
   now the previous generation; `claude-sonnet-5-5` is the current Sonnet at the
@@ -126,13 +117,24 @@ item yet; items move here from Open when the user decides they are "later".
   `pbstudy backup`. *Premise loosened 2026-10-12:* bytdb v0.19+ has `VACUUM`
   (`Engine.Compact`), which does shrink the file on demand, and btypedb
   auto-compacts the log once it has grown enough. The decision may deserve a
-  second look; `compact` does not run `VACUUM` today.
+  second look. Since 2026-10-14 (N-017), `compact` ends every real pass by
+  compacting the file, but it still requires a sync directory, so there is
+  no database-only mode.
 
 ## Closed
 
 Closures before this file existed are recorded in the session docs' bodies.
 The entries below are the ones found done while seeding the file.
 
+- **N-017** · raised `2026-1012-0131-bytdb-v0212-upgrade-next-list-seed` ·
+  closed 2026-10-14 — `pbstudy compact` grew the file it purged. New
+  `Store.CompactStudy` calls `Engine.Compact` (the native form of `VACUUM`,
+  no transaction), and every non-dry-run `compact` ends with it and prints
+  `Study database  before → after bytes`. Checked on a scratch data dir:
+  deleting 4 of 6 notes left `study.bytdb` at 16,595 bytes after the purge,
+  and 5,346 after compaction. `TestCompactStudyShrinksAfterDeletes` pins the
+  shrink and that the surviving row reads back through the same handle.
+  README and usage text updated.
 - **N-018** · raised `2026-1012-0131-bytdb-v0212-upgrade-next-list-seed` ·
   closed 2026-10-14 — Backup left a `.lock` sidecar in the synced backups
   folder. `BackupStudy` now removes it once `Backup` returns

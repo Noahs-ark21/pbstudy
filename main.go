@@ -103,7 +103,8 @@ Usage:
   pbstudy sync                         reconcile with the sync directory
   pbstudy compact [days] [--dry-run]   remove tombstones older than <days>
                                        (default 90) from the database and the
-                                       sync directory
+                                       sync directory, then shrink the
+                                       database file
 
 Environment:
   PBSTUDY_DATA_DIR    where the databases live      (default ~/.pbstudy)
@@ -330,7 +331,24 @@ func cmdCompact(conf cfg.Config, st *store.Store, args []string) error {
 
 	if dryRun {
 		fmt.Println("\nThis was a dry run; nothing was removed.")
+		return nil
 	}
+
+	// Removing rows appends their deletes to bytdb's log, so without this the
+	// purge would leave study.bytdb larger than before it ran. Done on every
+	// real pass, not only when rows went: a pass that removed nothing still
+	// reclaims whatever ordinary edits have appended since the last
+	// compaction, and on a database this size it costs well under a second.
+	// The dry run skips it because it promises to change nothing.
+	//
+	// A failure here is reported as the command's error even though the purge
+	// above succeeded: the rows are gone either way, and a non-zero exit is
+	// the honest answer to "did compact do everything it says it does".
+	before, after, err := st.CompactStudy()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("  %-18s %d → %d bytes\n", "Study database", before, after)
 	return nil
 }
 
