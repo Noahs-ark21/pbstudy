@@ -36,7 +36,7 @@ Seeded 2026-10-12 from all seven session docs (`2026-0805-1823` through
   section** (Closed, Non-goals, or a move between the three).
 - **Open, Validate and Roadmap stay in ID order.** Never renumber.
 
-**Next ID:** N-020
+**Next ID:** N-021
 
 ## Open
 
@@ -59,14 +59,16 @@ Seeded 2026-10-12 from all seven session docs (`2026-0805-1823` through
   again next pass. Bounded churn, converges once both compact, and what comes
   back is a tombstone, invisible to every read in `study/`.
 
-- **N-019** · raised `2026-1012-0131-bytdb-v0212-upgrade-next-list-seed` · value low
-  The AI draft uses `claude-sonnet-5` (`ai/draft.go:41`), which is valid but
-  now the previous generation; `claude-sonnet-5-5` is the current Sonnet at the
-  same price. `draft.go` already sends none of the parameters Sonnet 5.5
-  rejects (no sampling params, no `thinking` config, no forced `tool_choice`),
-  so the swap looks like one constant plus re-checking the request-shape test.
-  Best done together with the first live run (N-004), so the run observes
-  the model that ships.
+- **N-020** · raised `2026-1014-0736-work-next-list-n019-n005-n001` · value low
+  Sonnet 5.5's safety classifiers can decline a request (`stop_reason:
+  "refusal"`). `ai/draft.go` already reports that as a user-facing error
+  rather than an empty draft. The API also offers server-side fallbacks
+  (beta `server-side-fallback-2026-07-01` + `fallbacks: "default"`), which
+  re-serve a declined request on another model inside the same call. Not
+  added with N-019 because it adds a beta header to a hand-rolled client and
+  changes how a refusal is billed. A sermon draft is unlikely to trip a
+  classifier, so this matters only if refusals are ever seen (N-004's live
+  run would be the first chance).
 
 ## Validate
 
@@ -88,7 +90,9 @@ defect.
   in any session so far). The request shape, the streaming parse, the framing
   and every error path are covered offline, and the real API took the request
   as far as rejecting the key. The happy path against the real model wants
-  one run with a real key.
+  one run with a real key. Since N-019 the model is `claude-sonnet-5-5`, so
+  that run observes the model that ships: confirm a thinking status appears
+  before the first prose and the draft saves.
 
 ## Roadmap
 
@@ -126,6 +130,14 @@ item yet; items move here from Open when the user decides they are "later".
 Closures before this file existed are recorded in the session docs' bodies.
 The entries below are the ones found done while seeding the file.
 
+- **N-019** · raised `2026-1012-0131-bytdb-v0212-upgrade-next-list-seed` ·
+  closed 2026-10-14, `2026-1014-0736-work-next-list-n019-n005-n001` — `DefaultModel` is now
+  `claude-sonnet-5-5` (same price as `claude-sonnet-5`). Re-checked against
+  Sonnet 5.5's rules: the request sends no sampling params, no `thinking`
+  and no `tool_choice` (each would 400), and adaptive thinking still streams
+  thinking blocks, so the status event is unchanged. `TestDraftRequestShape`
+  now also bans `tool_choice`; `ai` and `web` tests green. Not observed live;
+  that is N-004.
 - **N-017** · raised `2026-1012-0131-bytdb-v0212-upgrade-next-list-seed` ·
   closed 2026-10-14, `2026-1014-0734-n002-n006-n017-n018-escape-backstop-sigterm-vacuum-sidecar` — `pbstudy compact` grew the file it purged. New
   `Store.CompactStudy` calls `Engine.Compact` (the native form of `VACUUM`,

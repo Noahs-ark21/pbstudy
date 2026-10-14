@@ -35,10 +35,16 @@ import (
 //
 // Sonnet-tier rather than Opus: this is long-form prose generation from
 // material the user already wrote and already believes, not a reasoning problem
-// — the hard thinking happened while they were taking the notes. Sonnet 5
+// — the hard thinking happened while they were taking the notes. Sonnet
 // writes it well at a fraction of the cost, which matters for a feature someone
 // pays for out of their own pocket on their own laptop.
-const DefaultModel = "claude-sonnet-5"
+//
+// Sonnet 5.5 rather than Sonnet 5 (the original choice): it is the current
+// Sonnet at the same per-token price, and the request below already sends
+// none of the parameters it rejects. Its adaptive thinking is on by default
+// and still streams thinking blocks (with empty text), so the "thinking"
+// status event in Draft keeps working unchanged.
+const DefaultModel = "claude-sonnet-5-5"
 
 const (
 	apiEndpoint = "https://api.anthropic.com/v1/messages"
@@ -205,10 +211,12 @@ type message struct {
 
 // buildPayload assembles the request body.
 //
-// Note what is absent: no temperature, no top_p, no thinking block. Sonnet 5
-// rejects non-default sampling parameters outright, and its adaptive thinking
-// is on by default — configuring either would at best be ignored and at worst
-// return a 400. The absence is the correct request, not an oversight.
+// Note what is absent: no temperature, no top_p, no thinking block, no
+// tool_choice. Sonnet 5.5 rejects non-default sampling parameters, a disabled
+// or budgeted thinking config, and forced tool choice outright, and its
+// adaptive thinking is on by default. Configuring any of them would at best be
+// ignored and at worst return a 400. The absence is the correct request, not
+// an oversight.
 func (c Client) buildPayload(req Request) payload {
 	model := c.Model
 	if model == "" {

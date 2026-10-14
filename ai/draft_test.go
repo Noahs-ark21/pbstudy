@@ -129,8 +129,9 @@ func TestDraftStreamsText(t *testing.T) {
 
 // TestDraftRequestShape pins the request.
 //
-// The absent parameters matter more than the present ones: Sonnet 5 rejects
-// non-default sampling parameters and manual thinking budgets outright, so a
+// The absent parameters matter more than the present ones: Sonnet 5.5 rejects
+// non-default sampling parameters, disabled or budgeted thinking, and forced
+// tool choice outright, so a
 // well-meaning future addition of "temperature": 0 would turn every draft into
 // a 400. This test is the thing that would catch it.
 func TestDraftRequestShape(t *testing.T) {
@@ -164,7 +165,7 @@ func TestDraftRequestShape(t *testing.T) {
 	if sent["max_tokens"] != float64(defaultMaxTokens) {
 		t.Errorf("max_tokens = %v, want %d", sent["max_tokens"], defaultMaxTokens)
 	}
-	for _, banned := range []string{"temperature", "top_p", "top_k", "thinking"} {
+	for _, banned := range []string{"temperature", "top_p", "top_k", "thinking", "tool_choice"} {
 		if _, present := sent[banned]; present {
 			t.Errorf("request carried %q, which this model rejects", banned)
 		}
