@@ -141,11 +141,13 @@ func cmdServe(conf cfg.Config, st *store.Store) error {
 		} else if rep.Imported() > 0 || rep.Problems() > 0 {
 			fmt.Printf("Sync: %s\n", rep.Headline())
 		}
-
-		// rweb's Run() does not return on a signal, so the export that must
-		// happen before exit is hung off the signal itself.
-		installShutdownFlush(sync, st)
 	}
+
+	// rweb's Run() does not return on a signal, so the work that must happen
+	// before exit (a final sync export, closing the databases) is hung off the
+	// signal itself. Installed with or without a syncer: without one, SIGTERM
+	// would otherwise kill the process before run()'s deferred st.Close().
+	installShutdownFlush(sync, st)
 
 	srv, err := web.New(conf, st, sync)
 	if err != nil {
@@ -181,18 +183,29 @@ func openSyncer(conf cfg.Config, st *store.Store) (*syncer.Syncer, error) {
 //
 // The handler does the closing itself: os.Exit runs no deferred functions, and
 // the alternative (asking rweb to stop) does not exist in its API.
+//
+// sync may be nil (no sync directory configured). The handler is still worth
+// installing then, for the close alone. bytdb's default durability means an
+// unclosed database loses nothing, and the kernel drops the flocks when the
+// process dies, so this is tidiness rather than a fix for data loss: the
+// databases are closed through their own Close, the same path every other
+// command takes, instead of being abandoned mid-log by a signal.
 func installShutdownFlush(sync *syncer.Syncer, st *store.Store) {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
 		sig := <-sigs
-		fmt.Printf("\nStopping (%s); writing pending changes to the sync directory ...\n", sig)
+		if sync != nil {
+			fmt.Printf("\nStopping (%s); writing pending changes to the sync directory ...\n", sig)
 
-		if rep, err := sync.Flush(); err != nil {
-			logger.LogErr(err, "final sync export failed")
-		} else if rep.Exported() > 0 {
-			fmt.Printf("Sync: %d file(s) written\n", rep.Exported())
+			if rep, err := sync.Flush(); err != nil {
+				logger.LogErr(err, "final sync export failed")
+			} else if rep.Exported() > 0 {
+				fmt.Printf("Sync: %d file(s) written\n", rep.Exported())
+			}
+		} else {
+			fmt.Printf("\nStopping (%s) ...\n", sig)
 		}
 
 		if err := st.Close(); err != nil {

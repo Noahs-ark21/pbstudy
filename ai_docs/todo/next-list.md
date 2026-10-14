@@ -53,13 +53,6 @@ Seeded 2026-10-12 from all seven session docs (`2026-0805-1823` through
   machine. A different cleanup than compaction: remove a file whose id no
   longer exists anywhere.
 
-- **N-006** · raised `2026-0805-2048-phase5-sync` · value low
-  Only the syncer path installs a signal handler (`installShutdownFlush`,
-  called at `main.go:147` inside the sync branch). With no sync directory
-  configured, `SIGTERM` still kills the process without closing the databases,
-  so the deferred `st.Close()` at `main.go:73` never runs. bytdb's default
-  durability covers it.
-
 - **N-007** · raised `2026-0805-2238-compaction` · value low
   Compaction is per machine and has to be run on each. A machine that has not
   compacted re-exports its tombstone files; the others import and remove them
@@ -150,6 +143,12 @@ item yet; items move here from Open when the user decides they are "later".
 Closures before this file existed are recorded in the session docs' bodies.
 The entries below are the ones found done while seeding the file.
 
+- **N-006** · raised `2026-0805-2048-phase5-sync` · closed 2026-10-14 —
+  No signal handler without sync. `installShutdownFlush` now takes a nil
+  syncer (skips the flush, still closes the store) and `cmdServe` installs it
+  unconditionally. Checked on a scratch server with no `PBSTUDY_SYNC_DIR`:
+  `SIGTERM` printed "Stopping (terminated) ..." and the process exited through
+  `st.Close()`.
 - **N-002** · raised `2026-0805-1917-phase2-notes-tags-xrefs` · closed
   2026-10-14 — No framework backstop for the escaping rule. Added
   `web/ui/escape_test.go`: it walks every view struct with reflection,
