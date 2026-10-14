@@ -52,7 +52,7 @@ Seeded 2026-10-12 from all seven session docs (`2026-0805-1823` through
   `syncer/compact.go`), but a shared live tag keeps its redundant file on every
   machine. A different cleanup than compaction: remove a file whose id no
   longer exists anywhere.
-  *Premise corrected 2026-10-14 (`2026-1014-0736-work-next-list-n019-n005-n001`):*
+  *Premise corrected 2026-10-14 (`2026-1014-0741-work-next-list-n019-n005-n001`):*
   that cleanup cannot work for a live tag. The redundant file's id still
   exists on the machine that minted it (`ApplyTag` keeps both local ids, by
   design), and export rewrites any local row whose file is missing
@@ -71,7 +71,7 @@ Seeded 2026-10-12 from all seven session docs (`2026-0805-1823` through
   again next pass. Bounded churn, converges once both compact, and what comes
   back is a tombstone, invisible to every read in `study/`.
 
-- **N-020** · raised `2026-1014-0736-work-next-list-n019-n005-n001` · value low
+- **N-020** · raised `2026-1014-0741-work-next-list-n019-n005-n001` · value low
   Sonnet 5.5's safety classifiers can decline a request (`stop_reason:
   "refusal"`). `ai/draft.go` already reports that as a user-facing error
   rather than an empty draft. The API also offers server-side fallbacks
@@ -133,7 +133,7 @@ item yet; items move here from Open when the user decides they are "later".
 Closures before this file existed are recorded in the session docs' bodies.
 The entries below are the ones found done while seeding the file.
 
-- **N-021** · raised `2026-1014-0736-work-next-list-n019-n005-n001` · closed 2026-10-14, `2026-1014-0736-work-next-list-n019-n005-n001` —
+- **N-021** · raised `2026-1014-0741-work-next-list-n019-n005-n001` · closed 2026-10-14, `2026-1014-0741-work-next-list-n019-n005-n001` —
   Found by N-001's check: the ScriptTagger config never took effect. The
   tagger replaces `BLB.Tagger` with its defaults on load, so the inline
   object emitted *before* the script tag was discarded: popups quoted NKJV,
@@ -146,7 +146,7 @@ The entries below are the ones found done while seeding the file.
   KJV, `HyperLinks` "all", `NoSearchClasses` includes `blb-no-tag`, popup
   reads "Romans 8:28 (KJV)". `TestTaggerConfigFollowsTagger` pins the order.
 - **N-001** · raised `2026-0805-1823-phase1-skeleton-reader` · closed
-  2026-10-14, `2026-1014-0736-work-next-list-n019-n005-n001` — ScriptTagger hover popups in a real browser, inside
+  2026-10-14, `2026-1014-0741-work-next-list-n019-n005-n001` — ScriptTagger hover popups in a real browser, inside
   note bodies. Chrome (via the extension) now reaches localhost. On a
   scratch server, a note body's "John 3:16", "Romans 8:28" and "Eph 2:8-9"
   were all tagged, and hovering one opened the BLB popup with the verse
@@ -154,7 +154,7 @@ The entries below are the ones found done while seeding the file.
   The check also found that the tagger config was being ignored, raised and
   fixed as N-021. After the fix the popup quotes KJV.
 - **N-019** · raised `2026-1012-0131-bytdb-v0212-upgrade-next-list-seed` ·
-  closed 2026-10-14, `2026-1014-0736-work-next-list-n019-n005-n001` — `DefaultModel` is now
+  closed 2026-10-14, `2026-1014-0741-work-next-list-n019-n005-n001` — `DefaultModel` is now
   `claude-sonnet-5-5` (same price as `claude-sonnet-5`). Re-checked against
   Sonnet 5.5's rules: the request sends no sampling params, no `thinking`
   and no `tool_choice` (each would 400), and adaptive thinking still streams
