@@ -68,16 +68,6 @@ Seeded 2026-10-12 from all seven session docs (`2026-0805-1823` through
   command shrink the file it just purged. Not a transaction-block statement,
   so it must run outside one. See N-012 for the related decision.
 
-- **N-018** · raised `2026-1012-0131-bytdb-v0212-upgrade-next-list-seed` · value low
-  Every `pbstudy backup` now leaves a `study-<stamp>.bytdb.lock` sidecar beside
-  the snapshot in `<SyncDir>/backups`, because bytdb v0.18+ `Backup` locks its
-  destination and btypedb deliberately never deletes lock sidecars. Harmless
-  (the lock is the flock, not the file; `recentBackups` lists only `*.bytdb`;
-  the syncer reads only `*.json` record files), but one stray file per backup is
-  uploaded to every machine. Either remove the sidecar once `Backup` returns
-  (no other process ever opens a fresh snapshot, so btypedb's reason for
-  keeping sidecars doesn't apply) or accept the clutter.
-
 - **N-019** · raised `2026-1012-0131-bytdb-v0212-upgrade-next-list-seed` · value low
   The AI draft uses `claude-sonnet-5` (`ai/draft.go:41`), which is valid but
   now the previous generation; `claude-sonnet-5-5` is the current Sonnet at the
@@ -143,6 +133,14 @@ item yet; items move here from Open when the user decides they are "later".
 Closures before this file existed are recorded in the session docs' bodies.
 The entries below are the ones found done while seeding the file.
 
+- **N-018** · raised `2026-1012-0131-bytdb-v0212-upgrade-next-list-seed` ·
+  closed 2026-10-14 — Backup left a `.lock` sidecar in the synced backups
+  folder. `BackupStudy` now removes it once `Backup` returns
+  (`removeLockSidecar`, symlink-resolved the way btypedb names it). The
+  sidecar race btypedb guards against needs a second opener of the same path,
+  and nothing opens a freshly minted snapshot. `store/store_test.go` checks
+  that only the `*.bytdb` file remains, directly and through a symlinked
+  folder; both tests fail with the removal disabled.
 - **N-006** · raised `2026-0805-2048-phase5-sync` · closed 2026-10-14 —
   No signal handler without sync. `installShutdownFlush` now takes a nil
   syncer (skips the flush, still closes the store) and `cmdServe` installs it

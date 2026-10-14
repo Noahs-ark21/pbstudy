@@ -16,11 +16,14 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/rohanthewiz/bytdb/stdlib"
+	"github.com/rohanthewiz/logger"
 	"github.com/rohanthewiz/serr"
 
 	"github.com/rohanthewiz/pbstudy/cfg"
@@ -135,9 +138,12 @@ func (s *Store) Close() error {
 //
 // Since bytdb v0.18, Backup also locks its destination (refusing one that is
 // a live database), and like every bytdb lock that leaves a small
-// study-<stamp>.bytdb.lock sidecar beside the snapshot for good. It is
-// harmless: the lock is the flock, not the file, so a leftover never blocks
-// anything, and the backup listing only reads *.bytdb names.
+// study-<stamp>.bytdb.lock sidecar beside the snapshot. It was harmless (the
+// lock is the flock, not the file, and the backup listing only reads *.bytdb
+// names), but the backups folder lives in the sync directory, so every stray
+// sidecar was uploaded to every machine. BackupStudy removes it once Backup
+// has returned; see removeLockSidecar for why that is safe here when btypedb
+// deliberately never does it in general.
 func (s *Store) BackupStudy(destDir string) (string, error) {
 	if destDir == "" {
 		return "", serr.New("no backup destination configured")
@@ -161,5 +167,39 @@ func (s *Store) BackupStudy(destDir string) (string, error) {
 	if err := eng.Backup(dest); err != nil {
 		return "", serr.Wrap(err, "backup failed", "dest", dest)
 	}
+
+	// The snapshot is complete and in place; a sidecar that cannot be
+	// removed is clutter, not a failed backup, so it is logged and the
+	// backup still reported as written.
+	if err := removeLockSidecar(dest); err != nil {
+		logger.LogErr(err, "backup written, but its lock sidecar was left behind", "dest", dest)
+	}
 	return dest, nil
+}
+
+// removeLockSidecar deletes the <dest>.lock file bytdb's Backup leaves beside
+// a fresh snapshot.
+//
+// btypedb keeps sidecars on purpose (btypedb lock.go): unlinking one while
+// another process is between opening and locking it lets two processes each
+// lock a different inode for the same database. That race needs a second
+// party opening the same path. Nothing opens a fresh snapshot: the name is
+// minted here from the current second, the file is not a live database, and
+// restoring one means renaming it to study.bytdb (whose own sidecar is
+// unrelated). Backup has already released its lock by the time it returns, so
+// the file is unheld when it is removed.
+//
+// The path is resolved through symlinks first because that is how btypedb
+// names the sidecar (lockPathFor): a backups folder reached through a
+// symlink gets its sidecar beside the real file, not beside the link.
+func removeLockSidecar(dest string) error {
+	resolved := dest
+	if real, err := filepath.EvalSymlinks(dest); err == nil {
+		resolved = real
+	}
+	sidecar := resolved + ".lock"
+	if err := os.Remove(sidecar); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return serr.Wrap(err, "cannot remove backup lock sidecar", "path", sidecar)
+	}
+	return nil
 }
