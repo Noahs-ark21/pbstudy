@@ -156,6 +156,7 @@ func (s *Server) registerRoutes() error {
 
 	s.rweb.Get("/search", s.handleSearch)
 	s.rweb.Get("/settings", s.handleSettings)
+	s.rweb.Post("/settings/translation", s.handleSetTranslation)
 
 	// --- notes ------------------------------------------------------------
 	// Every mutation is a POST that ends in a redirect (303), so a refresh

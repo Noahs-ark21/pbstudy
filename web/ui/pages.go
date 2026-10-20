@@ -102,7 +102,12 @@ type Settings struct {
 	AIEnabled    bool
 	Translations []bible.Translation
 	VerseCounts  map[string]int
-	Sync         SyncStatus
+
+	// Preferred is the translation used wherever a page does not name one —
+	// the saved choice if it is downloaded, else the fallback.
+	Preferred string
+
+	Sync SyncStatus
 }
 
 // SyncStatus is everything this page says about sync: where it points, what
@@ -138,7 +143,9 @@ type BackupFile struct {
 
 func (s Settings) Render(b *element.Builder) (x any) {
 	b.H1Class("page-title").T("Settings")
-	b.PClass("page-sub").T("Configuration is read from the environment at startup.")
+	b.PClass("page-sub").T("Paths and features are read from the environment at startup.")
+
+	s.renderPreferred(b)
 
 	b.DivClass("card").R(
 		b.H2().T("Paths"),
@@ -190,6 +197,41 @@ func (s Settings) Render(b *element.Builder) (x any) {
 					b.T(" to enable sermon drafting. Everything else works without it."),
 				)
 			}
+		}),
+	)
+	return
+}
+
+// renderPreferred is the translation card. Like the sync buttons, it is a
+// plain POST form, so it works with JavaScript disabled.
+func (s Settings) renderPreferred(b *element.Builder) (x any) {
+	b.DivClass("card").R(
+		b.H2().T("Translation"),
+		b.Wrap(func() {
+			if len(s.Translations) < 2 {
+				b.P().R(
+					b.T("Only one translation is downloaded. Run "),
+					b.Code().T("pbstudy download all"),
+					b.T(" to choose between KJV, WEB and ASV."),
+				)
+				return
+			}
+			b.FormClass("inline-form", "method", "post", "action", "/settings/translation").R(
+				b.Select("name", "translation", "aria-label", "Preferred translation").R(
+					element.ForEach(s.Translations, func(t bible.Translation) {
+						attrs := []string{"value", t.Abbrev}
+						if t.Abbrev == s.Preferred {
+							attrs = append(attrs, "selected", "selected")
+						}
+						b.Option(attrs...).T(upper(t.Abbrev) + " — " + esc(t.Name))
+					}),
+				),
+				b.Button("class", "btn", "type", "submit").T("Save"),
+			)
+			b.PClass("page-sub").T(
+				"Used wherever a page does not name a translation: the home page, " +
+					"search, and links into the reader. The reader's own picker still " +
+					"switches for one chapter at a time.")
 		}),
 	)
 	return

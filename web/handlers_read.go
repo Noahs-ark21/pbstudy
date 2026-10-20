@@ -13,15 +13,54 @@ import (
 )
 
 // defaultTranslation picks the translation to use when a request does not
-// name one: the first downloaded translation in preference order, falling
-// back to KJV so the UI still renders (with a "nothing downloaded" notice)
-// on a fresh install.
+// name one: the translation chosen on the settings page if it is still
+// downloaded, otherwise the first downloaded translation in preference order,
+// falling back to KJV so the UI still renders (with a "nothing downloaded"
+// notice) on a fresh install.
 func (s *Server) defaultTranslation() string {
 	downloaded, err := bible.Downloaded(s.store.Bible)
 	if err != nil || len(downloaded) == 0 {
 		return bible.DefaultTranslation
 	}
+	return pickTranslation(s.preferredTranslation(), downloaded)
+}
+
+// preferredTranslation reads the saved preference. A failed read is logged
+// and treated as "no preference": it should cost the user their choice for
+// one page, not the page.
+func (s *Server) preferredTranslation() string {
+	pref, err := bible.PreferredTranslation(s.store.Bible)
+	if err != nil {
+		logger.LogErr(err, "cannot read preferred translation")
+		return ""
+	}
+	return pref
+}
+
+// pickTranslation returns pref if it is among downloaded, else the first
+// downloaded translation. downloaded must be non-empty.
+func pickTranslation(pref string, downloaded []bible.Translation) string {
+	for _, t := range downloaded {
+		if t.Abbrev == pref {
+			return pref
+		}
+	}
 	return downloaded[0].Abbrev
+}
+
+// handleSetTranslation saves the preferred translation from the settings
+// page's form and returns there.
+func (s *Server) handleSetTranslation(ctx rweb.Context) error {
+	abbrev := ctx.Request().FormValue("translation")
+	if !bible.IsKnownTranslation(abbrev) {
+		return s.notFound(ctx, "There is no translation called "+
+			strconv.Quote(abbrev)+". Try kjv, web or asv.")
+	}
+	if err := bible.SetPreferredTranslation(s.store.Bible, abbrev); err != nil {
+		return s.renderError(ctx, http.StatusInternalServerError,
+			"Cannot save preference", "The preferred translation could not be saved.", err)
+	}
+	return ctx.Redirect(http.StatusSeeOther, "/settings")
 }
 
 // handleDashboard renders the canon index and cache status.
@@ -328,6 +367,7 @@ func (s *Server) handleSettings(ctx rweb.Context) error {
 			AIEnabled:    s.cfg.AIEnabled(),
 			Translations: downloaded,
 			VerseCounts:  counts,
+			Preferred:    s.defaultTranslation(),
 			Sync:         s.syncStatus(),
 		},
 	})

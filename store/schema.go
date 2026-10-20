@@ -72,6 +72,15 @@ var bibleSchema = []string{
 	// serves the reverse lookup "which translations have this verse", used
 	// by the parallel-translation verse hub.
 	`CREATE INDEX IF NOT EXISTS idx_verses_ref ON verses (book_num, chapter, verse)`,
+
+	// Per-machine reading preferences (today just the preferred translation).
+	// They live here rather than in study.bytdb because they describe this
+	// machine's cache, not the user's study data: they are not synced, and
+	// losing them with a deleted cache costs one click on the settings page.
+	`CREATE TABLE IF NOT EXISTS prefs (
+		key TEXT PRIMARY KEY,
+		value TEXT
+	)`,
 }
 
 // studySchema is the user's own data.
