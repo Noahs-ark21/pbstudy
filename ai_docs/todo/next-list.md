@@ -36,7 +36,7 @@ Seeded 2026-10-12 from all seven session docs (`2026-0805-1823` through
   section** (Closed, Non-goals, or a move between the three).
 - **Open, Validate and Roadmap stay in ID order.** Never renumber.
 
-**Next ID:** N-022
+**Next ID:** N-029
 
 ## Open
 
@@ -81,6 +81,36 @@ Seeded 2026-10-12 from all seven session docs (`2026-0805-1823` through
   changes how a refusal is billed. A sermon draft is unlikely to trip a
   classifier, so this matters only if refusals are ever seen (N-004's live
   run would be the first chance).
+
+- **N-022** · raised `2026-1019-2255-preferred-translation-fork` · value medium
+  `pbstudy serve` listens on every interface (`[::]:8000`, logged at
+  startup) with no authentication, so anyone on the same Wi-Fi can read and
+  edit the study database. Bind to `127.0.0.1` by default, with an opt-in
+  env var (e.g. `PBSTUDY_LISTEN`) for reaching it from a phone, and show the
+  bound address on the settings page.
+
+- **N-023** · raised `2026-1019-2255-preferred-translation-fork` · value low
+  Resume reading: bare `/read` always lands on John 1
+  (`handleReadDefault`). Remember the last chapter read, e.g. in the bible
+  db's `prefs` table added for the preferred translation.
+
+- **N-024** · raised `2026-1019-2255-preferred-translation-fork` · value medium
+  Start on login. The server only runs while a terminal keeps it alive,
+  worked around today by starting it by hand. A launchd agent (plist plus an
+  install note or command) would keep it at `localhost:8000`.
+
+- **N-025** · raised `2026-1019-2255-preferred-translation-fork` · value low
+  Verse highlighting in a few colours from the reader, separate from notes.
+  Needs a new synced study table (id / updated_at / deleted_at) and sync
+  export.
+
+- **N-026** · raised `2026-1019-2255-preferred-translation-fork` · value low
+  Side-by-side chapter reading across translations. The verse hub already
+  shows every translation for one verse; nothing does it for a chapter.
+
+- **N-027** · raised `2026-1019-2255-preferred-translation-fork` · value low
+  Reading plan / reading log: mark chapters read, track progress through a
+  plan. Largest of this batch; synced like other study data.
 
 ## Validate
 
@@ -127,6 +157,9 @@ item yet; items move here from Open when the user decides they are "later".
   second look. Since 2026-10-14 (N-017), `compact` ends every real pass by
   compacting the file, but it still requires a sync directory, so there is
   no database-only mode.
+- **N-028** · declined `2026-1019-2255-preferred-translation-fork` — NKJV.
+  It is under copyright, so it cannot be cached like KJV/WEB/ASV; an NKJV
+  option for the Blue Letter Bible link-out was offered and the user said no.
 
 ## Closed
 
