@@ -125,7 +125,7 @@ defect.
 Wanted, but deferred. Parked, not declined. Items move here from Open when
 the user decides they are "later".
 
-- **N-029** · raised `2026-1019-2255-preferred-translation-fork` · value low
+- **N-029** · raised `2026-1021-1802-loopback-ai-options` · value low
   AI study assistant: a "Study with AI" button on the verse hub that drafts a
   note (context, key words as Strong's shortcodes, suggested cross-references
   validated with `bible.ParseRef`, reflection questions) from the verse in
@@ -139,7 +139,7 @@ the user decides they are "later".
   means a 3–4B model: fine for explaining, weak on facts. A chat panel is a
   possible second step.
 
-- **N-030** · raised `2026-1019-2255-preferred-translation-fork` · value low
+- **N-030** · raised `2026-1021-1802-loopback-ai-options` · value low
   Public-domain study resources cached like the translations: Treasury of
   Scripture Knowledge cross-references, Matthew Henry's commentary, Strong's
   definitions. Reliable, free and offline; pairs with N-029.
@@ -178,7 +178,7 @@ the user decides they are "later".
 Closures before this file existed are recorded in the session docs' bodies.
 The entries below are the ones found done while seeding the file.
 
-- **N-022** · raised `2026-1019-2255-preferred-translation-fork` · closed 2026-10-21, commit "Listen on loopback by default" —
+- **N-022** · raised `2026-1019-2255-preferred-translation-fork` · closed 2026-10-21, `2026-1021-1802-loopback-ai-options` —
   `pbstudy serve` listened on every interface with no authentication, so
   anyone on the same Wi-Fi could read and edit the study database. Now
   `PBSTUDY_HOST` defaults to `127.0.0.1` (an empty host also reads as
