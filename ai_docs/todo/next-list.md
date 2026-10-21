@@ -36,7 +36,7 @@ Seeded 2026-10-12 from all seven session docs (`2026-0805-1823` through
   section** (Closed, Non-goals, or a move between the three).
 - **Open, Validate and Roadmap stay in ID order.** Never renumber.
 
-**Next ID:** N-029
+**Next ID:** N-031
 
 ## Open
 
@@ -122,8 +122,27 @@ defect.
 
 ## Roadmap
 
-Wanted, but deferred. Parked, not declined. No session doc has deferred an
-item yet; items move here from Open when the user decides they are "later".
+Wanted, but deferred. Parked, not declined. Items move here from Open when
+the user decides they are "later".
+
+- **N-029** · raised `2026-1019-2255-preferred-translation-fork` · value low
+  AI study assistant: a "Study with AI" button on the verse hub that drafts a
+  note (context, key words as Strong's shortcodes, suggested cross-references
+  validated with `bible.ParseRef`, reflection questions) from the verse in
+  every cached translation plus the user's own notes and xrefs. Opens in the
+  note editor, labelled as AI-written; nothing saves until the user does.
+  Reuse `ai/` streaming and `web/drafts.go`. Three interchangeable backends,
+  chosen in settings: the user's Claude subscription via `claude -p
+  --output-format json` (personal fork only: Anthropic does not allow
+  offering claude.ai login in products for others), `ANTHROPIC_API_KEY`, or a
+  free local model through Ollama. This machine is an M2 with 8 GB, so local
+  means a 3–4B model: fine for explaining, weak on facts. A chat panel is a
+  possible second step.
+
+- **N-030** · raised `2026-1019-2255-preferred-translation-fork` · value low
+  Public-domain study resources cached like the translations: Treasury of
+  Scripture Knowledge cross-references, Matthew Henry's commentary, Strong's
+  definitions. Reliable, free and offline; pairs with N-029.
 
 ## Non-goals
 
