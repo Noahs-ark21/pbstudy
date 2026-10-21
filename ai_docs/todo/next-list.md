@@ -82,13 +82,6 @@ Seeded 2026-10-12 from all seven session docs (`2026-0805-1823` through
   classifier, so this matters only if refusals are ever seen (N-004's live
   run would be the first chance).
 
-- **N-022** · raised `2026-1019-2255-preferred-translation-fork` · value medium
-  `pbstudy serve` listens on every interface (`[::]:8000`, logged at
-  startup) with no authentication, so anyone on the same Wi-Fi can read and
-  edit the study database. Bind to `127.0.0.1` by default, with an opt-in
-  env var (e.g. `PBSTUDY_LISTEN`) for reaching it from a phone, and show the
-  bound address on the settings page.
-
 - **N-023** · raised `2026-1019-2255-preferred-translation-fork` · value low
   Resume reading: bare `/read` always lands on John 1
   (`handleReadDefault`). Remember the last chapter read, e.g. in the bible
@@ -166,6 +159,13 @@ item yet; items move here from Open when the user decides they are "later".
 Closures before this file existed are recorded in the session docs' bodies.
 The entries below are the ones found done while seeding the file.
 
+- **N-022** · raised `2026-1019-2255-preferred-translation-fork` · closed 2026-10-21, commit "Listen on loopback by default" —
+  `pbstudy serve` listened on every interface with no authentication, so
+  anyone on the same Wi-Fi could read and edit the study database. Now
+  `PBSTUDY_HOST` defaults to `127.0.0.1` (an empty host also reads as
+  loopback); `0.0.0.0` opts in for phone access and is announced at startup
+  and on the settings page, which now shows the full listen address.
+  Verified: refused via the LAN IP by default, reachable with the opt-in.
 - **N-021** · raised `2026-1014-0741-work-next-list-n019-n005-n001` · closed 2026-10-14, `2026-1014-0741-work-next-list-n019-n005-n001` —
   Found by N-001's check: the ScriptTagger config never took effect. The
   tagger replaces `BLB.Tagger` with its defaults on load, so the inline

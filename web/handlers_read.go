@@ -359,12 +359,15 @@ func (s *Server) handleSettings(ctx rweb.Context) error {
 		Active:      ui.NavSettings,
 		Translation: s.defaultTranslation(),
 		Body: ui.Settings{
-			DataDir:      s.cfg.DataDir,
-			BibleDBPath:  s.cfg.BibleDBPath(),
-			StudyDBPath:  s.cfg.StudyDBPath(),
-			SyncDir:      s.cfg.SyncDir,
-			Port:         s.cfg.Port,
-			AIEnabled:    s.cfg.AIEnabled(),
+			DataDir:     s.cfg.DataDir,
+			BibleDBPath: s.cfg.BibleDBPath(),
+			StudyDBPath: s.cfg.StudyDBPath(),
+			SyncDir:     s.cfg.SyncDir,
+			Address:     s.cfg.Address(),
+			AIEnabled:   s.cfg.AIEnabled(),
+
+			NetworkReachable: s.cfg.NetworkReachable(),
+
 			Translations: downloaded,
 			VerseCounts:  counts,
 			Preferred:    s.defaultTranslation(),

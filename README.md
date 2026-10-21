@@ -85,8 +85,15 @@ Everything comes from the environment; there is no config file.
 | --- | --- | --- |
 | `PBSTUDY_DATA_DIR` | `~/.pbstudy` | where the databases live |
 | `PBSTUDY_SYNC_DIR` | *(unset)* | sync and backup directory |
+| `PBSTUDY_HOST` | `127.0.0.1` | interface to listen on |
 | `PBSTUDY_PORT` | `8000` | HTTP listen port |
 | `ANTHROPIC_API_KEY` | *(unset)* | enables AI sermon drafting |
+
+pbstudy has no login, so by default it only accepts connections from the
+machine it runs on. To open it from a phone on the same network, set
+`PBSTUDY_HOST=0.0.0.0`, but only on a network you trust: anyone on it can then
+read and edit your notes. The settings page and startup output say when this
+is on.
 
 The API key is held in memory only. It is never written to a database, an
 export, or a backup, and the drafting UI is hidden entirely when it is unset.

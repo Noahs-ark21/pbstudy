@@ -94,12 +94,17 @@ func (d Dashboard) renderBooks(b *element.Builder, testament, label string) (x a
 // buttons on this page are not configuration: they are actions against the
 // state it describes.
 type Settings struct {
-	DataDir      string
-	BibleDBPath  string
-	StudyDBPath  string
-	SyncDir      string
-	Port         int
-	AIEnabled    bool
+	DataDir     string
+	BibleDBPath string
+	StudyDBPath string
+	SyncDir     string
+	Address     string
+	AIEnabled   bool
+
+	// NetworkReachable is true when the listen address accepts other
+	// machines; the page then says so, since the app has no login.
+	NetworkReachable bool
+
 	Translations []bible.Translation
 	VerseCounts  map[string]int
 
@@ -145,6 +150,18 @@ func (s Settings) Render(b *element.Builder) (x any) {
 	b.H1Class("page-title").T("Settings")
 	b.PClass("page-sub").T("Paths and features are read from the environment at startup.")
 
+	if s.NetworkReachable {
+		b.DivClass("notice").R(
+			b.Strong().T("Open to your network. "),
+			b.T("pbstudy is listening on "),
+			b.Code().T(esc(s.Address)),
+			b.T(", so other devices on this network can read and edit your notes, "),
+			b.T("and there is no login. Unset "),
+			b.Code().T("PBSTUDY_HOST"),
+			b.T(" and restart to keep it on this machine only."),
+		)
+	}
+
 	s.renderPreferred(b)
 
 	b.DivClass("card").R(
@@ -154,7 +171,7 @@ func (s Settings) Render(b *element.Builder) (x any) {
 			kv(b, "Scripture cache", s.BibleDBPath),
 			kv(b, "Study database", s.StudyDBPath),
 			kv(b, "Sync directory", orNone(s.SyncDir)),
-			kv(b, "Listen port", itoa(s.Port)),
+			kv(b, "Listen address", s.Address),
 		),
 	)
 

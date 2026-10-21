@@ -109,6 +109,9 @@ Usage:
 Environment:
   PBSTUDY_DATA_DIR    where the databases live      (default ~/.pbstudy)
   PBSTUDY_SYNC_DIR    sync/backup directory         (default: sync disabled)
+  PBSTUDY_HOST        interface to listen on        (default 127.0.0.1;
+                                                     0.0.0.0 opens it to
+                                                     your network)
   PBSTUDY_PORT        HTTP listen port              (default 8000)
   ANTHROPIC_API_KEY   enables AI sermon drafting    (optional)
 
@@ -157,6 +160,11 @@ func cmdServe(conf cfg.Config, st *store.Store) error {
 
 	fmt.Printf("pbstudy serving on http://localhost:%d  (data: %s)\n",
 		conf.Port, conf.DataDir)
+	if conf.NetworkReachable() {
+		fmt.Printf("Listening on %s: other machines on this network can open pbstudy,\n"+
+			"and it has no login. Unset %s to keep it on this machine only.\n",
+			conf.Address(), cfg.EnvHost)
+	}
 	return srv.Run()
 }
 

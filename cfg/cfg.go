@@ -7,6 +7,7 @@
 package cfg
 
 import (
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -20,12 +21,19 @@ import (
 const (
 	EnvDataDir      = "PBSTUDY_DATA_DIR"
 	EnvSyncDir      = "PBSTUDY_SYNC_DIR"
+	EnvHost         = "PBSTUDY_HOST"
 	EnvPort         = "PBSTUDY_PORT"
 	EnvAnthropicKey = "ANTHROPIC_API_KEY"
 )
 
 // Default listen port. 8000 matches the house convention for local Go apps.
 const defaultPort = 8000
+
+// Default listen host: loopback only. The app has no login, so listening on
+// every interface hands the study database to anyone on the same network —
+// a café or church Wi-Fi, say. Reaching it from a phone is an opt-in
+// (PBSTUDY_HOST=0.0.0.0), made on a network the user trusts.
+const defaultHost = "127.0.0.1"
 
 // Config is the resolved runtime configuration, built once at startup.
 type Config struct {
@@ -38,6 +46,10 @@ type Config struct {
 	// one IS meant to live in iCloud/Syncthing/a git checkout. Empty means
 	// sync is disabled.
 	SyncDir string
+
+	// Host is the interface to listen on: an IP address or "localhost".
+	// Loopback unless PBSTUDY_HOST says otherwise.
+	Host string
 
 	// Port is the local HTTP listen port.
 	Port int
@@ -82,6 +94,7 @@ func Load() (Config, error) {
 	c := Config{
 		SyncDir:      os.Getenv(EnvSyncDir),
 		AnthropicKey: os.Getenv(EnvAnthropicKey),
+		Host:         defaultHost,
 		Port:         defaultPort,
 	}
 
@@ -111,6 +124,13 @@ func Load() (Config, error) {
 			return c, serr.New("invalid port", EnvPort, p)
 		}
 		c.Port = port
+	}
+
+	if h := os.Getenv(EnvHost); h != "" {
+		if !validHost(h) {
+			return c, serr.New("invalid host; use an IP address or localhost", EnvHost, h)
+		}
+		c.Host = h
 	}
 
 	if c.SyncDir != "" {
@@ -165,7 +185,34 @@ func checkDirsDisjoint(dataDir, syncDir string) error {
 	return nil
 }
 
-// Address is the listen address in the ":port" form rweb expects. The empty
-// host binds all interfaces, which is what makes the app reachable from a
-// phone on the same LAN — a deliberate choice for a personal study tool.
-func (c Config) Address() string { return ":" + strconv.Itoa(c.Port) }
+// Address is the listen address in the "host:port" form rweb expects.
+// JoinHostPort brackets an IPv6 host, so PBSTUDY_HOST=:: works too.
+func (c Config) Address() string { return net.JoinHostPort(c.listenHost(), strconv.Itoa(c.Port)) }
+
+// NetworkReachable reports whether the listen address accepts connections
+// from other machines, so startup and the settings page can say so plainly.
+func (c Config) NetworkReachable() bool {
+	h := c.listenHost()
+	if h == "localhost" {
+		return false
+	}
+	ip := net.ParseIP(h)
+	return ip == nil || !ip.IsLoopback()
+}
+
+// listenHost is Host with the zero value read as loopback. An empty host
+// means every interface to net.Listen, so a Config built without Load must
+// not fall open by omission.
+func (c Config) listenHost() string {
+	if c.Host == "" {
+		return defaultHost
+	}
+	return c.Host
+}
+
+// validHost accepts what can be listened on without a DNS lookup: an IP
+// address or "localhost". A hostname would bind to whatever it resolves to
+// at startup, which is too easy to get wrong for a security default.
+func validHost(h string) bool {
+	return h == "localhost" || net.ParseIP(h) != nil
+}
