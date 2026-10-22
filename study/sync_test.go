@@ -41,6 +41,9 @@ func openSyncTestDB(t *testing.T) *sql.DB {
 		`CREATE TABLE sermons (id TEXT PRIMARY KEY, title TEXT, outline JSONB,
 		    draft_md TEXT, status TEXT, created_at TIMESTAMP, updated_at TIMESTAMP,
 		    deleted_at TIMESTAMP)`,
+		`CREATE TABLE highlights (id TEXT PRIMARY KEY, book_num INT, chapter INT,
+		    verse INT, color TEXT, created_at TIMESTAMP, updated_at TIMESTAMP,
+		    deleted_at TIMESTAMP)`,
 	} {
 		if _, err := db.Exec(stmt); err != nil {
 			t.Fatalf("schema: %v", err)

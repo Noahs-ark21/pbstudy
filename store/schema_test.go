@@ -170,6 +170,7 @@ func TestBootstrapCreatesEveryRelation(t *testing.T) {
 		{studyDB, "note_tags"},
 		{studyDB, "cross_refs"},
 		{studyDB, "sermons"},
+		{studyDB, "highlights"},
 	} {
 		var n int
 		if err := tc.db.QueryRow(`SELECT COUNT(*) FROM ` + tc.table).Scan(&n); err != nil {

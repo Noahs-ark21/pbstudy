@@ -184,6 +184,11 @@ func (s *Server) registerRoutes() error {
 	s.rweb.Post("/xrefs", s.handleXrefCreate)
 	s.rweb.Post("/xrefs/:id/delete", s.handleXrefDelete)
 
+	// --- highlights -------------------------------------------------------
+	// One route sets and clears: the verse hub's swatches and its "Clear"
+	// button are submit buttons on the same form.
+	s.rweb.Post("/highlights", s.handleHighlight)
+
 	// --- sermons ----------------------------------------------------------
 	// Outline sections are addressed by their own id rather than their
 	// position, so a button clicked on a page that has since been reordered

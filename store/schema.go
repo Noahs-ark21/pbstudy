@@ -181,6 +181,23 @@ var studySchema = []string{
 		updated_at TIMESTAMP,
 		deleted_at TIMESTAMP
 	)`,
+
+	// One row per highlighted verse, translation-independent: a colour marks
+	// the verse, not one rendering of it. The id is derived from the verse
+	// (see study.highlightID) rather than minted, so two machines that each
+	// highlight John 3:16 offline write the same row and converge on the
+	// newer colour instead of accumulating duplicates.
+	`CREATE TABLE IF NOT EXISTS highlights (
+		id TEXT PRIMARY KEY,
+		book_num INT,
+		chapter INT,
+		verse INT,
+		color TEXT,
+		created_at TIMESTAMP,
+		updated_at TIMESTAMP,
+		deleted_at TIMESTAMP
+	)`,
+	`CREATE INDEX IF NOT EXISTS idx_highlights_chapter ON highlights (book_num, chapter)`,
 }
 
 func bootstrapBible(db *sql.DB) error { return applySchema(db, bibleSchema) }

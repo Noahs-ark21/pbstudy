@@ -74,6 +74,8 @@ func kindLabel(kind string) string {
 		return "Cross-references"
 	case "sermon":
 		return "Sermons"
+	case "highlight":
+		return "Highlights"
 	default:
 		return kind
 	}

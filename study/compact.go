@@ -34,10 +34,11 @@ import (
 // interpolated into SQL below, so this list — not a caller's string — is what
 // keeps that interpolation safe.
 const (
-	tableNotes   = "notes"
-	tableTags    = "tags"
-	tableXrefs   = "cross_refs"
-	tableSermons = "sermons"
+	tableNotes      = "notes"
+	tableTags       = "tags"
+	tableXrefs      = "cross_refs"
+	tableSermons    = "sermons"
+	tableHighlights = "highlights"
 )
 
 // ExpiredNotes lists notes tombstoned strictly before cutoff.
@@ -58,6 +59,11 @@ func ExpiredXrefs(db *sql.DB, cutoff time.Time) ([]string, error) {
 // ExpiredSermons lists sermons tombstoned strictly before cutoff.
 func ExpiredSermons(db *sql.DB, cutoff time.Time) ([]string, error) {
 	return expiredIn(db, tableSermons, cutoff)
+}
+
+// ExpiredHighlights lists highlights cleared strictly before cutoff.
+func ExpiredHighlights(db *sql.DB, cutoff time.Time) ([]string, error) {
+	return expiredIn(db, tableHighlights, cutoff)
 }
 
 // PurgeNotes removes the given notes for real, anchors and tag links included,
@@ -110,6 +116,13 @@ func PurgeXrefs(db *sql.DB, ids []string) ([]string, error) {
 // row's own JSONB column, so it goes with it.
 func PurgeSermons(db *sql.DB, ids []string) ([]string, error) {
 	return purgeRows(db, tableSermons, ids, nil)
+}
+
+// PurgeHighlights removes the given cleared highlights for real. A highlight
+// has no children; highlighting the verse again simply inserts a fresh row
+// under the same derived id.
+func PurgeHighlights(db *sql.DB, ids []string) ([]string, error) {
+	return purgeRows(db, tableHighlights, ids, nil)
 }
 
 // --- internals -------------------------------------------------------------

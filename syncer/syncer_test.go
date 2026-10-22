@@ -303,6 +303,55 @@ func TestTagDeletePropagates(t *testing.T) {
 	}
 }
 
+// TestHighlightsConvergeByVerse is the case the derived highlight id exists
+// for: both machines colour the same verse before either has synced. They
+// must end on one highlight in the newer colour — not two rows, and not the
+// tag-style duplicate files of N-005 — and a later clear must reach both.
+func TestHighlightsConvergeByVerse(t *testing.T) {
+	syncDir := t.TempDir()
+	a := newHost(t, "A", syncDir)
+	b := newHost(t, "B", syncDir)
+
+	if err := study.SetHighlight(a.store.Study, rom58, "yellow"); err != nil {
+		t.Fatalf("A: SetHighlight() error: %v", err)
+	}
+	if err := study.SetHighlight(b.store.Study, rom58, "blue"); err != nil { // the newer write
+		t.Fatalf("B: SetHighlight() error: %v", err)
+	}
+
+	a.run(t)
+	b.run(t)
+	a.run(t)
+	b.run(t)
+
+	for _, h := range []*host{a, b} {
+		got, err := study.ChapterHighlights(h.store.Study, 45, 5)
+		if err != nil {
+			t.Fatalf("%s: ChapterHighlights() error: %v", h.name, err)
+		}
+		if len(got) != 1 || got[8] != "blue" {
+			t.Errorf("%s: Romans 5 highlights = %v, want map[8:blue]", h.name, got)
+		}
+	}
+	files, err := recordFiles(filepath.Join(syncDir, "highlights"))
+	if err != nil {
+		t.Fatalf("recordFiles() error: %v", err)
+	}
+	if len(files) != 1 {
+		t.Errorf("highlights folder holds %d files (%v), want 1", len(files), files)
+	}
+
+	if err := study.ClearHighlight(a.store.Study, rom58); err != nil {
+		t.Fatalf("A: ClearHighlight() error: %v", err)
+	}
+	a.run(t)
+	b.run(t)
+
+	if c, err := study.HighlightOf(b.store.Study, 45, 5, 8); err != nil || c != "" {
+		t.Errorf("B: after A cleared it, Romans 5:8 = %q, %v; want no highlight", c, err)
+	}
+}
+
 // TestImportOnlyAndExportOnly pins the directions the startup and shutdown
 // paths depend on: startup must not write, and the debounced export must not
 // pull in a page of remote edits mid-session.

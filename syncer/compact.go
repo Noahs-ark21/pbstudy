@@ -229,6 +229,9 @@ func (s *Syncer) Compact(retention time.Duration, dryRun bool) (CompactReport, e
 
 		compactEntity(s, study.SyncKindSermon, "sermons", cutoff, dryRun,
 			study.ExportSermons, study.ExpiredSermons, study.PurgeSermons),
+
+		compactEntity(s, study.SyncKindHighlight, "highlights", cutoff, dryRun,
+			study.ExportHighlights, study.ExpiredHighlights, study.PurgeHighlights),
 	)
 
 	rep.Duration = time.Since(started)

@@ -271,7 +271,8 @@ func (s Settings) renderSync(b *element.Builder) (x any) {
 					b.T("Off. Set "),
 					b.Code().T("PBSTUDY_SYNC_DIR"),
 					b.T(" to a folder your sync service watches (iCloud, Syncthing, a git "),
-					b.T("checkout) and restart. Notes, tags, cross-references and sermons are "),
+					b.T("checkout) and restart. Notes, tags, cross-references, sermons and "),
+					b.T("highlights are "),
 					b.T("written there as one JSON file each; scripture never is."),
 				)
 				b.PClass("page-sub").R(
@@ -285,7 +286,7 @@ func (s Settings) renderSync(b *element.Builder) (x any) {
 
 			b.Dl("class", "kv").R(
 				kv(b, "Sync directory", s.Sync.Dir),
-				kv(b, "Written there", "notes · tags · xrefs · sermons · backups"),
+				kv(b, "Written there", "notes · tags · xrefs · sermons · highlights · backups"),
 			)
 
 			b.DivClass("link-row").R(

@@ -92,11 +92,6 @@ Seeded 2026-10-12 from all seven session docs (`2026-0805-1823` through
   worked around today by starting it by hand. A launchd agent (plist plus an
   install note or command) would keep it at `localhost:8000`.
 
-- **N-025** · raised `2026-1019-2255-preferred-translation-fork` · value low
-  Verse highlighting in a few colours from the reader, separate from notes.
-  Needs a new synced study table (id / updated_at / deleted_at) and sync
-  export.
-
 - **N-026** · raised `2026-1019-2255-preferred-translation-fork` · value low
   Side-by-side chapter reading across translations. The verse hub already
   shows every translation for one verse; nothing does it for a chapter.
@@ -177,6 +172,13 @@ the user decides they are "later".
 
 Closures before this file existed are recorded in the session docs' bodies.
 The entries below are the ones found done while seeding the file.
+
+- **N-025** · raised `2026-1019-2255-preferred-translation-fork` · closed 2026-10-21 —
+  Verse highlighting in four colours, separate from notes. A synced
+  `highlights` table whose id is derived from the verse (`hl-B-C-V`), so the
+  same verse highlighted on two machines converges instead of duplicating;
+  set or cleared from the verse hub, tinted in the reader. Not built:
+  highlighting straight from the reader, and verse ranges.
 
 - **N-022** · raised `2026-1019-2255-preferred-translation-fork` · closed 2026-10-21, `2026-1021-1802-loopback-ai-options` —
   `pbstudy serve` listened on every interface with no authentication, so

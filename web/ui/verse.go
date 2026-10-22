@@ -33,6 +33,9 @@ type VerseHub struct {
 	XrefsOut []study.CrossRef
 	XrefsIn  []study.CrossRef
 
+	// Highlight is this verse's colour, or "" when it has none.
+	Highlight string
+
 	// KnownTags feeds the quick-add form's tag autocomplete.
 	KnownTags []study.Tag
 	// Problem reports a rejected quick-add, echoed back above the form.
@@ -61,6 +64,7 @@ func (v VerseHub) Render(b *element.Builder) (x any) {
 	}
 
 	v.renderTranslations(b)
+	v.renderHighlight(b, ref)
 	v.renderNotes(b, ref)
 	v.renderXrefs(b, ref)
 	v.renderExternalLinks(b)
@@ -81,12 +85,46 @@ func (v VerseHub) renderTranslations(b *element.Builder) (x any) {
 	// Scripture we render ourselves is off-limits to ScriptTagger, same
 	// reasoning as the reader: it would re-link text that already carries
 	// our own links.
-	b.Div("class", "card "+blb.NoTagClass).R(
+	cardClass := "card " + blb.NoTagClass
+	if c := highlightClass(v.Highlight); c != "" {
+		cardClass += " " + c
+	}
+	b.Div("class", cardClass).R(
 		element.ForEach(v.Renderings, func(vs bible.Verse) {
 			b.DivClass("translation-row").R(
 				b.DivClass("translation-tag").T(upper(vs.Translation)),
 				b.DivClass("translation-body").T(esc(vs.Body)),
 			)
+		}),
+	)
+	return
+}
+
+// renderHighlight is the colour picker: one form whose swatches are its submit
+// buttons, so choosing a colour is one click and works with JavaScript off.
+// The current colour is marked with aria-pressed rather than only by an
+// outline, so it is announced as well as seen.
+func (v VerseHub) renderHighlight(b *element.Builder, ref bible.Ref) (x any) {
+	returnTo := VerseURL(v.Book.Num, v.Chapter, v.Verse) + "?t=" + v.ReadTranslation
+
+	b.Form("class", "highlight-bar", "method", "post", "action", "/highlights").R(
+		b.Input("type", "hidden", "name", "at", "value", esc(ref.String())),
+		b.Input("type", "hidden", "name", "return", "value", esc(returnTo)),
+		b.SpanClass("highlight-label").T("Highlight"),
+		element.ForEach(study.HighlightColors, func(c string) {
+			pressed := "false"
+			if c == v.Highlight {
+				pressed = "true"
+			}
+			b.Button("type", "submit", "name", "color", "value", c,
+				"class", "swatch hl-"+c, "aria-pressed", pressed,
+				"title", "Highlight "+c, "aria-label", "Highlight "+c).T("")
+		}),
+		b.Wrap(func() {
+			if v.Highlight != "" {
+				b.Button("type", "submit", "name", "color", "value", "none",
+					"class", "btn swatch-clear").T("Clear")
+			}
 		}),
 	)
 	return

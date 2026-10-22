@@ -18,7 +18,7 @@ import (
 // directory is self-describing the moment it is configured — an empty tree
 // tells the user where things will land, and a sync daemon has something to
 // pick up before there is any data.
-var entityFolders = []string{"notes", "tags", "xrefs", "sermons", "backups"}
+var entityFolders = []string{"notes", "tags", "xrefs", "sermons", "highlights", "backups"}
 
 // fileExt is the only extension the importer reads. Anything else in a folder
 // (a daemon's conflict copy, a partially written .tmp, a stray README) is left

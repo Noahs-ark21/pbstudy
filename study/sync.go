@@ -45,10 +45,11 @@ const SyncVersion = 1
 // Record kinds. These are written into each file and checked on import, so a
 // file that lands in the wrong folder is reported rather than half-applied.
 const (
-	SyncKindNote   = "note"
-	SyncKindTag    = "tag"
-	SyncKindXref   = "xref"
-	SyncKindSermon = "sermon"
+	SyncKindNote      = "note"
+	SyncKindTag       = "tag"
+	SyncKindXref      = "xref"
+	SyncKindSermon    = "sermon"
+	SyncKindHighlight = "highlight"
 )
 
 // Syncable is what the syncer needs of any record: who it is, when it was last
@@ -145,6 +146,24 @@ func (r XrefRecord) SyncStamp() time.Time   { return r.UpdatedAt }
 func (r XrefRecord) SyncKind() string       { return r.Kind }
 func (r XrefRecord) SyncVersion() int       { return r.V }
 func (r XrefRecord) SyncDeleted() time.Time { return deletedAt(r.DeletedAt) }
+
+// HighlightRecord is a verse's colour as it travels. At is always one verse.
+type HighlightRecord struct {
+	Kind      string     `json:"kind"`
+	V         int        `json:"v"`
+	ID        string     `json:"id"`
+	At        bible.Ref  `json:"at"`
+	Color     string     `json:"color"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
+	DeletedAt *time.Time `json:"deletedAt,omitempty"`
+}
+
+func (r HighlightRecord) SyncID() string         { return r.ID }
+func (r HighlightRecord) SyncStamp() time.Time   { return r.UpdatedAt }
+func (r HighlightRecord) SyncKind() string       { return r.Kind }
+func (r HighlightRecord) SyncVersion() int       { return r.V }
+func (r HighlightRecord) SyncDeleted() time.Time { return deletedAt(r.DeletedAt) }
 
 // SermonRecord is a sermon as it travels, outline and draft included. The
 // outline is the same []Section the database column holds, so the file and the
@@ -268,6 +287,34 @@ func ExportXrefs(db *sql.DB) ([]XrefRecord, error) {
 	}
 	if err := rows.Err(); err != nil {
 		return nil, serr.Wrap(err, "cannot iterate cross-references for export")
+	}
+	return out, nil
+}
+
+// ExportHighlights reads every highlight, tombstones included.
+func ExportHighlights(db *sql.DB) ([]HighlightRecord, error) {
+	rows, err := db.Query(
+		`SELECT id, book_num, chapter, verse, color, created_at, updated_at, deleted_at
+		   FROM highlights ORDER BY id`)
+	if err != nil {
+		return nil, serr.Wrap(err, "cannot read highlights for export")
+	}
+	defer rows.Close()
+
+	var out []HighlightRecord
+	for rows.Next() {
+		rec := HighlightRecord{Kind: SyncKindHighlight, V: SyncVersion}
+		var deleted sql.NullTime
+		if err := rows.Scan(&rec.ID, &rec.At.BookNum, &rec.At.Chapter, &rec.At.VerseStart,
+			&rec.Color, &rec.CreatedAt, &rec.UpdatedAt, &deleted); err != nil {
+			return nil, serr.Wrap(err, "cannot scan highlight row for export")
+		}
+		rec.At.VerseEnd = rec.At.VerseStart
+		rec.DeletedAt = nullTime(deleted)
+		out = append(out, rec)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, serr.Wrap(err, "cannot iterate highlights for export")
 	}
 	return out, nil
 }
@@ -549,6 +596,45 @@ func ApplyXref(db *sql.DB, rec XrefRecord) error {
 		rec.To.BookNum, rec.To.Chapter, rec.To.VerseStart, toEnd,
 		rec.Comment, rec.CreatedAt, rec.UpdatedAt, rec.DeletedAt); err != nil {
 		return serr.Wrap(err, "cannot insert cross-reference from sync", "xref", rec.ID)
+	}
+	return nil
+}
+
+// ApplyHighlight writes an incoming highlight over whatever is here.
+//
+// The id must be the one the verse derives. It is what makes two machines
+// converge on one row per verse, so a file whose id and verse disagree (a hand
+// edit, or a bug elsewhere) is refused rather than allowed to plant a second
+// colour on a verse under a foreign id.
+func ApplyHighlight(db *sql.DB, rec HighlightRecord) error {
+	if rec.ID == "" {
+		return serr.New("highlight record has no id")
+	}
+	if rec.ID != highlightID(rec.At.BookNum, rec.At.Chapter, rec.At.VerseStart) {
+		return serr.New("highlight id does not match its verse",
+			"highlight", rec.ID, "verse", rec.At.String())
+	}
+
+	res, err := db.Exec(
+		`UPDATE highlights SET book_num = $1, chapter = $2, verse = $3, color = $4,
+		        created_at = $5, updated_at = $6, deleted_at = $7
+		  WHERE id = $8`,
+		rec.At.BookNum, rec.At.Chapter, rec.At.VerseStart, rec.Color,
+		rec.CreatedAt, rec.UpdatedAt, rec.DeletedAt, rec.ID)
+	if err != nil {
+		return serr.Wrap(err, "cannot update highlight from sync", "highlight", rec.ID)
+	}
+	if n, err := res.RowsAffected(); err == nil && n > 0 {
+		return nil
+	}
+
+	if _, err := db.Exec(
+		`INSERT INTO highlights (id, book_num, chapter, verse, color,
+		     created_at, updated_at, deleted_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+		rec.ID, rec.At.BookNum, rec.At.Chapter, rec.At.VerseStart, rec.Color,
+		rec.CreatedAt, rec.UpdatedAt, rec.DeletedAt); err != nil {
+		return serr.Wrap(err, "cannot insert highlight from sync", "highlight", rec.ID)
 	}
 	return nil
 }

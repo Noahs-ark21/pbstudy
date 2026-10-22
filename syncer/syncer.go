@@ -9,6 +9,7 @@
 //	<sync>/tags/<uuid>.json
 //	<sync>/xrefs/<uuid>.json
 //	<sync>/sermons/<uuid>.json
+//	<sync>/highlights/hl-<book>-<chapter>-<verse>.json   id derived from the verse
 //	<sync>/backups/study-<ts>.bytdb   engine snapshots (see store.BackupStudy)
 //
 // A file-sync daemon (iCloud, Syncthing, git) is what moves those files between
@@ -196,7 +197,7 @@ func (s *Syncer) runLocked(doImport, doExport bool) Report {
 	started := time.Now()
 	rep := Report{Dir: s.dir, StartedAt: started.UTC()}
 
-	// The four entities are independent, and each one's failure is recorded in
+	// The five entities are independent, and each one's failure is recorded in
 	// its own line of the report rather than abandoning the pass: a malformed
 	// sermon file must not stop notes from arriving.
 	rep.Entities = append(rep.Entities,
@@ -232,6 +233,12 @@ func (s *Syncer) runLocked(doImport, doExport bool) Report {
 			study.ExportSermons,
 			func(rec study.SermonRecord) (applied, error) {
 				return applied{Yes: true}, study.ApplySermon(s.db, rec)
+			}),
+
+		syncEntity(s, study.SyncKindHighlight, "highlights", doImport, doExport,
+			study.ExportHighlights,
+			func(rec study.HighlightRecord) (applied, error) {
+				return applied{Yes: true}, study.ApplyHighlight(s.db, rec)
 			}),
 	)
 

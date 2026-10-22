@@ -232,6 +232,44 @@ main {
 }
 .verse-mark:hover { text-decoration: none; filter: brightness(1.3); }
 
+// ---- highlights ----------------------------------------------------------
+// Translucent washes rather than solid fills: the text keeps the page's
+// contrast, and a highlight still reads as a highlight on the raised card
+// background of the verse hub. The swatches use the same hues at full
+// strength so the picker shows what the verse will look like.
+.verse.hl-yellow, .card.hl-yellow { background: rgba(232, 200, 72, 0.18); }
+.verse.hl-green,  .card.hl-green  { background: rgba(112, 196, 124, 0.18); }
+.verse.hl-blue,   .card.hl-blue   { background: rgba(112, 164, 236, 0.20); }
+.verse.hl-pink,   .card.hl-pink   { background: rgba(232, 124, 176, 0.18); }
+.verse.hl-yellow, .verse.hl-green, .verse.hl-blue, .verse.hl-pink {
+  border-radius: radius;
+  padding: 0 0.25rem;
+  margin-left: -0.25rem;
+}
+
+.highlight-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: -0.4rem 0 1rem;
+}
+.highlight-label { font-size: 0.85rem; color: textDim; margin-right: 0.2rem; }
+.swatch {
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+.swatch.hl-yellow { background: #e8c848; }
+.swatch.hl-green  { background: #70c47c; }
+.swatch.hl-blue   { background: #70a4ec; }
+.swatch.hl-pink   { background: #e87cb0; }
+.swatch:hover { border-color: textBright; }
+.swatch[aria-pressed="true"] { border-color: textBright; box-shadow: 0 0 0 2px bg inset; }
+.swatch-clear { font-size: 0.82rem; padding: 0.2rem 0.6rem; }
+
 // ---- verse hub -----------------------------------------------------------
 .verse-hero {
   font-family: readFont;

@@ -31,6 +31,9 @@ type Reader struct {
 	// attached to the chapter as a whole. Precomputed by the handler in one
 	// query so rendering a verse costs a map lookup, not a round trip.
 	Marks map[int]study.Marks
+	// Highlights maps a verse number to its colour; unhighlighted verses are
+	// absent.
+	Highlights map[int]string
 	// ChapterNotes are notes anchored to the whole chapter rather than to a
 	// verse in it. They have nowhere to hang in the verse flow, so they get
 	// their own card above the text.
@@ -66,7 +69,7 @@ func (r Reader) Render(b *element.Builder) (x any) {
 			// The ?t= carries the translation being read into the hub, so
 			// its "back to chapter" link and BLB deep links return here
 			// rather than to whatever translation happens to sort first.
-			b.SpanClass("verse", "id", "v"+itoa(v.Num)).R(
+			b.SpanClass(verseClass(r.Highlights[v.Num]), "id", "v"+itoa(v.Num)).R(
 				b.AClass("verse-num",
 					"href", VerseURL(v.BookNum, v.Chapter, v.Num)+"?t="+r.Translation,
 					"title", "Open verse hub").T(itoa(v.Num)),
@@ -83,6 +86,26 @@ func (r Reader) Render(b *element.Builder) (x any) {
 			F("This chapter on Blue Letter Bible"),
 	)
 	return
+}
+
+// verseClass is a verse's class list: "verse", plus "hl-<colour>" when it is
+// highlighted.
+func verseClass(highlight string) string {
+	if c := highlightClass(highlight); c != "" {
+		return "verse " + c
+	}
+	return "verse"
+}
+
+// highlightClass is the class for a highlight colour, or "" for no highlight.
+// The colour is checked against the known palette here, in the view, rather
+// than trusted from the handler: it lands in an attribute, and an allow-list
+// is a stronger guarantee than escaping for a value that must be a class name.
+func highlightClass(color string) string {
+	if !study.IsHighlightColor(color) {
+		return ""
+	}
+	return "hl-" + color
 }
 
 // renderMarks draws the indicator that a verse has notes or cross-references

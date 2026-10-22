@@ -189,6 +189,12 @@ func (s *Server) handleRead(ctx rweb.Context) error {
 	if err != nil {
 		chapterNotes = nil
 	}
+	highlights, err := study.ChapterHighlights(s.store.Study, bookNum, chapter)
+	if err != nil {
+		logger.LogErr(err, "cannot load chapter highlights",
+			"book", bk.Name, "chapter", strconv.Itoa(chapter))
+		highlights = nil
+	}
 
 	return s.render(ctx, ui.Page{
 		Title:       bk.Name + " " + strconv.Itoa(chapter),
@@ -203,6 +209,7 @@ func (s *Server) handleRead(ctx rweb.Context) error {
 			Prev:         s.prevChapter(translation, bk, chapter),
 			Next:         s.nextChapter(translation, bk, chapter),
 			Marks:        marks,
+			Highlights:   highlights,
 			ChapterNotes: chapterNotes,
 		},
 	})
@@ -311,6 +318,12 @@ func (s *Server) renderVerseHub(ctx rweb.Context, bk *bible.Book,
 	if err != nil {
 		xrefsOut = nil
 	}
+	highlight, err := study.HighlightOf(s.store.Study, bk.Num, chapter, verse)
+	if err != nil {
+		logger.LogErr(err, "cannot load highlight for verse", "book", bk.Name,
+			"chapter", strconv.Itoa(chapter), "verse", strconv.Itoa(verse))
+		highlight = ""
+	}
 	xrefsIn, err := study.XrefsTo(s.store.Study, bk.Num, chapter, verse)
 	if err != nil {
 		xrefsIn = nil
@@ -332,6 +345,7 @@ func (s *Server) renderVerseHub(ctx rweb.Context, bk *bible.Book,
 			Notes:           notes,
 			XrefsOut:        xrefsOut,
 			XrefsIn:         xrefsIn,
+			Highlight:       highlight,
 			KnownTags:       knownTags,
 			Problem:         problem,
 		},
