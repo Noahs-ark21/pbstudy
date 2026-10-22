@@ -173,7 +173,7 @@ the user decides they are "later".
 Closures before this file existed are recorded in the session docs' bodies.
 The entries below are the ones found done while seeding the file.
 
-- **N-025** · raised `2026-1019-2255-preferred-translation-fork` · closed 2026-10-21 —
+- **N-025** · raised `2026-1019-2255-preferred-translation-fork` · closed 2026-10-21, `2026-1021-2232-verse-highlighting` —
   Verse highlighting in four colours, separate from notes. A synced
   `highlights` table whose id is derived from the verse (`hl-B-C-V`), so the
   same verse highlighted on two machines converges instead of duplicating;
